@@ -1,0 +1,4960 @@
+<!doctype html>
+<html lang="tr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sabır Fidanı — 3D Sinematik Kompozisyon Stüdyosu</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+    :root {
+      --bg: #090e0c;
+      --panel: rgba(14, 20, 17, .94);
+      --panel-border: rgba(255, 255, 255, .10);
+      --text: #f5f8f6;
+      --muted: #95a39d;
+      --accent: #e6b45c;
+      --accent-glow: rgba(230, 180, 92, .35);
+      --leaf: #52c41a;
+      --leaf-glow: rgba(82, 196, 26, .35);
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, .35);
+      --good: #52c41a;
+      --bad: #ff4d4f;
+      --cam-color: #e6b45c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      border: 0;
+      cursor: pointer;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #scene {
+      position: absolute;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* ==========================================================
+       TOP BAR
+    ========================================================== */
+    .topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(6, 10, 8, .96) 0%, rgba(6, 10, 8, .4) 80%, transparent 100%);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .brand {
+      pointer-events: auto;
+      font-size: 13px;
+      letter-spacing: .12em;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 9.5px;
+      background: rgba(82, 196, 26, .18);
+      border: 1px solid rgba(82, 196, 26, .45);
+      color: var(--leaf);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .topmeta {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .scenario-btn {
+      background: rgba(230, 180, 92, .14);
+      border: 1px solid rgba(230, 180, 92, .45);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 9px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: .18s;
+    }
+
+    .scenario-btn:hover {
+      background: rgba(230, 180, 92, .28);
+      transform: translateY(-1px);
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    .view-mode-tabs {
+      pointer-events: auto;
+      display: flex;
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .view-tab {
+      padding: 5px 12px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      background: transparent;
+      color: var(--muted);
+      transition: .18s;
+    }
+
+    .view-tab.active {
+      background: var(--accent);
+      color: #111;
+      font-weight: 700;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .iconbtn {
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      transition: .18s;
+    }
+
+    .iconbtn:hover {
+      background: rgba(255, 255, 255, .14);
+      transform: translateY(-1px);
+    }
+
+    /* TOP ACTION BUTTONS: SCREENSHOT, EXPORT, SHARE, COLLECTION */
+    .top-actions-cluster {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, .45);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 3px 4px;
+    }
+
+    .top-action-btn {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 7px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #d7e3dc;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .16s ease;
+      position: relative;
+    }
+
+    .top-action-btn:hover {
+      background: rgba(255, 255, 255, .14);
+      color: #fff;
+      border-color: rgba(255, 255, 255, .2);
+      transform: translateY(-1px);
+    }
+
+    .top-action-btn:active {
+      transform: translateY(0);
+    }
+
+    .top-action-btn kbd {
+      background: #19221c;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-size: 8.5px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--leaf);
+      font-weight: 700;
+    }
+
+    .coll-count-badge {
+      background: var(--leaf);
+      color: #061408;
+      font-size: 9.5px;
+      font-weight: 800;
+      border-radius: 10px;
+      padding: 0 5px;
+      min-width: 15px;
+      height: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Flash shutter animation */
+    .shutter-flash {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.15s ease-out;
+    }
+
+    .shutter-flash.flash {
+      opacity: 0.85;
+      transition: none;
+    }
+
+    /* REPOSITIONED TOP-LEFT NON-CONFLICTING HINT PANEL */
+    .hint {
+      position: absolute;
+      left: 76px;
+      top: 72px;
+      width: 340px;
+      max-width: calc(100% - 90px);
+      z-index: 35;
+      padding: 14px 16px;
+      border: 1.5px solid var(--accent);
+      background: rgba(14, 20, 16, .98);
+      backdrop-filter: blur(18px);
+      border-radius: 14px;
+      font-size: 11.5px;
+      display: none;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, .8), 0 0 20px var(--accent-glow);
+      animation: slideDownHint .2s ease-out;
+    }
+
+    @keyframes slideDownHint {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hint.show {
+      display: block;
+    }
+
+    .hint-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .hint-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hint-kicker {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hint-body {
+      color: #d1dfd7;
+      line-height: 1.5;
+    }
+
+    /* COLLECTION DRAWER MODAL */
+    .collection-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .75);
+      backdrop-filter: blur(10px);
+      display: none;
+      place-items: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .collection-modal.show {
+      display: grid;
+    }
+
+    .collection-card {
+      width: min(740px, 100%);
+      max-height: 84vh;
+      overflow-y: auto;
+      background: #0d1410;
+      border: 1.5px solid var(--leaf);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 30px 90px #000e, 0 0 30px rgba(82, 196, 26, .15);
+    }
+
+    .collection-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .collection-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .collection-item {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: .2s;
+    }
+
+    .collection-item:hover {
+      border-color: var(--leaf);
+      transform: translateY(-2px);
+    }
+
+    .coll-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .coll-item-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #c4d0ca;
+    }
+
+    .coll-item-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    /* Scenario Top Nav on Scenario Card */
+    .scenario-top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .sc-nav-arrows {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .sc-arrow-btn {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 6px;
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .sc-arrow-btn:hover {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+    }
+
+    .sc-arrow-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .sc-pill-btn {
+      background: rgba(230, 180, 92, .14);
+      border: 1px solid rgba(230, 180, 92, .4);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .sc-pill-btn:hover {
+      background: rgba(230, 180, 92, .25);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* ==========================================================
+       SCENARIO SELECTION MODAL
+    ========================================================== */
+    .scenario-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .8);
+      backdrop-filter: blur(12px);
+      display: none;
+      place-items: center;
+      z-index: 50;
+      padding: 20px;
+    }
+
+    .scenario-modal.show {
+      display: grid;
+    }
+
+    .sc-modal-card {
+      width: min(740px, 100%);
+      max-height: 86vh;
+      overflow-y: auto;
+      background: #0f1512;
+      border: 1px solid rgba(82, 196, 26, .3);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: 0 30px 100px #000e, 0 0 30px rgba(82, 196, 26, .1);
+    }
+
+    .sc-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .sc-modal-kicker {
+      font-size: 10px;
+      letter-spacing: .14em;
+      color: var(--leaf);
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .sc-modal-header h2 {
+      font-size: 18px;
+      margin-top: 2px;
+      color: #fff;
+    }
+
+    .sc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .sc-card {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 14px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all .22s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sc-card:hover:not(.locked) {
+      background: rgba(82, 196, 26, .09);
+      border-color: var(--leaf);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .55), 0 0 16px rgba(82, 196, 26, .2);
+    }
+
+    .sc-card.active {
+      background: rgba(230, 180, 92, .14);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(230, 180, 92, .3);
+    }
+
+    .sc-card-thumb-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #080c0a;
+      margin-bottom: 8px;
+    }
+
+    .sc-card-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform .35s ease;
+    }
+
+    .sc-card:hover:not(.locked) .sc-card-thumb {
+      transform: scale(1.06);
+    }
+
+    .sc-card-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.75) 100%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 6px 8px;
+      pointer-events: none;
+    }
+
+    .sc-card.locked {
+      opacity: 0.55;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    .sc-card.locked .sc-card-thumb {
+      filter: grayscale(0.85) brightness(0.7);
+    }
+
+    .sc-card-locked-cover {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 15, 12, .78);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #f87171;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      z-index: 2;
+    }
+
+    .sc-lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(231, 123, 112, .85);
+      border: 1px solid rgba(255, 255, 255, .3);
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 9.5px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .5);
+    }
+
+    .sc-passed-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(82, 196, 26, .9);
+      border: 1px solid rgba(255, 255, 255, .3);
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 9.5px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .5);
+    }
+
+    .sc-card-badge {
+      font-size: 9px;
+      font-weight: 800;
+      background: rgba(0, 0, 0, .75);
+      border: 1px solid rgba(82, 196, 26, .5);
+      color: var(--leaf);
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: .03em;
+    }
+
+    .sc-card-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      margin: 2px 0 4px;
+      color: #f5f8f6;
+      line-height: 1.3;
+    }
+
+    .sc-card-desc {
+      font-size: 10.5px;
+      color: #9ba8a2;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .sc-card-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .sc-tag {
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 8.5px;
+      color: #c4d0ca;
+    }
+
+    .sc-unlock-banner {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(82, 196, 26, .25) 0%, rgba(230, 180, 92, .22) 100%);
+      border: 1.5px solid var(--good);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      animation: slideUp 0.3s ease;
+    }
+
+    .sc-unlock-text {
+      font-size: 11.5px;
+      color: #eaf5ee;
+      line-height: 1.35;
+    }
+
+    .sc-unlock-text b {
+      color: var(--good);
+    }
+
+    .sc-unlock-btn {
+      background: var(--good);
+      color: #061408;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: .18s;
+      white-space: nowrap;
+      border: none;
+    }
+
+    .sc-unlock-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px rgba(82, 196, 26, .7);
+    }
+
+    @media(max-width:650px) {
+      .sc-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ==========================================================
+       TOOLBAR (LEFT)
+    ========================================================== */
+    .toolbar {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 15;
+      padding: 8px;
+      background: rgba(11, 16, 13, .88);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+    }
+
+    .toolbtn {
+      position: relative;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      transition: .18s;
+    }
+
+    .toolbtn:hover {
+      background: rgba(255, 255, 255, .12);
+      transform: translateY(-1px);
+    }
+
+    .toolbtn.active {
+      background: rgba(82, 196, 26, .22);
+      border-color: rgba(82, 196, 26, .65);
+      color: var(--leaf);
+      box-shadow: 0 0 12px var(--leaf-glow);
+    }
+
+    .toolbtn[data-tip]:hover:after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50px;
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      background: #141a16;
+      color: #f0f5f2;
+      border: 1px solid var(--panel-border);
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px #000a;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* ==========================================================
+       CAMERA CONTROL PANEL & BLENDER GIZMO HUD (RIGHT PANEL DOCKED)
+    ========================================================== */
+    .cam-gizmo {
+      position: absolute;
+      right: 20px;
+      top: 72px;
+      width: 290px;
+      z-index: 25;
+      background: rgba(11, 16, 13, .94);
+      border: 1.5px solid var(--good);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      padding: 12px 14px;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, .75), 0 0 25px rgba(82, 196, 26, .3);
+      display: none;
+      pointer-events: auto;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .cam-gizmo.active {
+      display: block;
+    }
+
+    .gizmo-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 7px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .gizmo-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      color: var(--good);
+    }
+
+    .active-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 8px var(--good);
+      animation: pulseGreen 1.2s infinite alternate;
+    }
+
+    @keyframes pulseGreen {
+      from {
+        opacity: 0.6;
+        transform: scale(0.85)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1.25)
+      }
+    }
+
+    .gizmo-close {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .15);
+      border-radius: 6px;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .gizmo-close:hover {
+      background: rgba(255, 77, 79, .25);
+      border-color: var(--bad);
+      color: #fff;
+    }
+
+    .gizmo-mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .g-mode-btn {
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 7px;
+      padding: 5px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #c8d2cd;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: .15s;
+    }
+
+    .g-mode-btn:hover {
+      background: rgba(82, 196, 26, .18);
+      border-color: var(--good);
+      color: #fff;
+    }
+
+    .g-mode-btn.active {
+      background: var(--good);
+      border-color: var(--good);
+      color: #061408;
+      box-shadow: 0 0 10px rgba(82, 196, 26, .4);
+    }
+
+    .gizmo-body {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .gizmo-control-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, .03);
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .gizmo-lbl {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .gizmo-stepper {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .g-step-btn {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 6px;
+      width: 24px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      color: #fff;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .g-step-btn:hover {
+      background: var(--good);
+      border-color: var(--good);
+      color: #061408;
+      font-weight: 700;
+      box-shadow: 0 0 8px rgba(82, 196, 26, .4);
+    }
+
+    .g-val {
+      font-size: 10.5px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: #f0f5f2;
+      min-width: 38px;
+      text-align: center;
+    }
+
+    .gizmo-lens-pills {
+      display: flex;
+      gap: 4px;
+    }
+
+    .g-lens-btn {
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #d0ded6;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .g-lens-btn:hover {
+      background: rgba(82, 196, 26, .2);
+      border-color: var(--good);
+      color: #fff;
+    }
+
+    .g-lens-btn.active {
+      background: var(--good);
+      border-color: var(--good);
+      color: #061408;
+      font-weight: 700;
+    }
+
+    .gizmo-quick-presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .g-preset-pill {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 6px;
+      padding: 4px 3px;
+      font-size: 9px;
+      font-weight: 600;
+      text-align: center;
+      color: #c8d6ce;
+      cursor: pointer;
+      transition: .15s;
+      white-space: nowrap;
+    }
+
+    .g-preset-pill:hover {
+      background: rgba(230, 180, 92, .2);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .gizmo-drag-tip {
+      margin-top: 6px;
+      font-size: 9px;
+      color: var(--good);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0.9;
+    }
+
+    /* ==========================================================
+       SCENARIO PANEL (BOTTOM LEFT)
+    ========================================================== */
+    .scenario {
+      position: absolute;
+      left: 76px;
+      bottom: 20px;
+      width: min(500px, calc(100% - 100px));
+      z-index: 15;
+      padding: 16px 18px;
+      border: 1px solid var(--panel-border);
+      border-radius: 15px;
+      background: linear-gradient(135deg, rgba(12, 18, 14, .95) 0%, rgba(12, 18, 14, .82) 100%);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
+    }
+
+    .kicker {
+      font-size: 10px;
+      letter-spacing: .14em;
+      color: var(--leaf);
+      font-weight: 800;
+    }
+
+    .scenario h1 {
+      font-size: 19px;
+      margin: 4px 0 6px;
+      color: #fff;
+    }
+
+    .scenario p {
+      margin: 0;
+      color: #c2cec7;
+      line-height: 1.45;
+      font-size: 12.5px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, .06);
+      font-size: 11.5px;
+      font-weight: 600;
+      transition: .18s;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, .14);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: var(--leaf);
+      color: #061408;
+      border-color: var(--leaf);
+      font-weight: 800;
+      box-shadow: 0 0 16px var(--leaf-glow);
+    }
+
+    /* ==========================================================
+       10-ATTEMPT TRACKER PIPS & AUTO-SOLVE BUTTON
+    ========================================================== */
+    .attempt-tracker-wrap {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .attempt-pips-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: #9cb3a5;
+    }
+
+    .attempt-lbl {
+      font-weight: 700;
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: .04em;
+    }
+
+    .attempt-pips {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .2);
+      transition: all .25s ease;
+    }
+
+    .pip.filled {
+      background: var(--accent);
+      border-color: #ffe699;
+      box-shadow: 0 0 6px var(--accent-glow);
+      transform: scale(1.15);
+    }
+
+    .pip.unlocked {
+      background: var(--leaf);
+      border-color: #8ce65e;
+      box-shadow: 0 0 8px var(--leaf-glow);
+    }
+
+    .attempt-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #cbdad1;
+    }
+
+    .auto-solve-btn {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, rgba(230, 180, 92, .25) 0%, rgba(82, 196, 26, .22) 100%);
+      border: 1.5px solid var(--accent);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 8px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 0 18px rgba(230, 180, 92, .3);
+      animation: autoSolveGlow 1.8s infinite alternate ease-in-out;
+      transition: all .2s ease;
+    }
+
+    .auto-solve-btn.show {
+      display: inline-flex;
+    }
+
+    .auto-solve-btn:hover {
+      background: var(--accent);
+      color: #0d1410;
+      transform: translateY(-1px);
+      box-shadow: 0 0 24px rgba(230, 180, 92, .6);
+    }
+
+    @keyframes autoSolveGlow {
+      from { box-shadow: 0 0 10px rgba(230, 180, 92, .2); }
+      to { box-shadow: 0 0 20px rgba(230, 180, 92, .5); }
+    }
+
+    /* ==========================================================
+       CAMERA MONITOR (LIVE VIEWFINDER BOTTOM RIGHT)
+    ========================================================== */
+    .monitor {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      width: 320px;
+      height: 195px;
+      border-radius: 14px;
+      border: 2px solid rgba(82, 196, 26, .6);
+      background: #050806;
+      overflow: hidden;
+      z-index: 16;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .75), 0 0 25px rgba(82, 196, 26, .2);
+      transition: width .25s cubic-bezier(0.16, 1, 0.3, 1), height .25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .monitor.expanded {
+      width: 460px;
+      height: 275px;
+    }
+
+    #preview {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .monitor-header {
+      position: absolute;
+      inset: 8px 10px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: .08em;
+      text-shadow: 0 1px 4px #000;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .rec {
+      color: var(--bad);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .rec:before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: var(--bad);
+      border-radius: 50%;
+      animation: blink 1s infinite alternate;
+    }
+
+    @keyframes blink {
+      from {
+        opacity: 1
+      }
+
+      to {
+        opacity: .2
+      }
+    }
+
+    .monitor-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .mon-btn {
+      background: rgba(0, 0, 0, .55);
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 6px;
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      color: #f0f5f2;
+      transition: .15s;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+
+    .mon-btn:hover {
+      background: rgba(82, 196, 26, .3);
+      border-color: var(--leaf);
+      color: var(--leaf);
+      transform: scale(1.08);
+    }
+
+    .mon-btn.active {
+      background: rgba(82, 196, 26, .4);
+      border-color: var(--leaf);
+      color: var(--leaf);
+      box-shadow: 0 0 8px var(--leaf-glow);
+    }
+
+    /* 1/3 RULE OF THIRDS GRID ON VIEWFINDER MONITOR */
+    .monitor-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      z-index: 6;
+    }
+
+    .monitor-grid.show {
+      display: block;
+    }
+
+    .monitor-grid i {
+      position: absolute;
+      background: rgba(82, 196, 26, .45);
+      box-shadow: 0 0 6px rgba(82, 196, 26, .35);
+    }
+
+    .monitor-grid .m-v1 {
+      left: 33.333%;
+      top: 0;
+      width: 1px;
+      height: 100%;
+    }
+
+    .monitor-grid .m-v2 {
+      left: 66.666%;
+      top: 0;
+      width: 1px;
+      height: 100%;
+    }
+
+    .monitor-grid .m-h1 {
+      top: 33.333%;
+      left: 0;
+      width: 100%;
+      height: 1px;
+    }
+
+    .monitor-grid .m-h2 {
+      top: 66.666%;
+      left: 0;
+      width: 100%;
+      height: 1px;
+    }
+
+    .monitor-grid .m-point {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border: 1.5px solid rgba(82, 196, 26, .9);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(82, 196, 26, .25);
+      box-shadow: 0 0 8px rgba(0, 0, 0, .6);
+      transition: transform .2s, background .2s, border-color .2s;
+    }
+
+    .monitor-grid .mp1 {
+      left: 33.333%;
+      top: 33.333%
+    }
+
+    .monitor-grid .mp2 {
+      left: 66.666%;
+      top: 33.333%
+    }
+
+    .monitor-grid .mp3 {
+      left: 33.333%;
+      top: 66.666%
+    }
+
+    .monitor-grid .mp4 {
+      left: 66.666%;
+      top: 66.666%
+    }
+
+    .monitor-grid .m-point.hit {
+      background: var(--good);
+      border-color: #ffffff;
+      box-shadow: 0 0 16px var(--good), 0 0 6px #fff;
+      transform: translate(-50%, -50%) scale(1.6);
+    }
+
+    .monitor-viewfinder-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border: 1px dashed rgba(255, 255, 255, .12);
+      margin: 12px;
+      z-index: 5;
+    }
+
+    .vf-corner {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--leaf);
+    }
+
+    .vf-tl {
+      top: 0;
+      left: 0;
+      border-top: 2px solid;
+      border-left: 2px solid;
+    }
+
+    .vf-tr {
+      top: 0;
+      right: 0;
+      border-top: 2px solid;
+      border-right: 2px solid;
+    }
+
+    .vf-bl {
+      bottom: 0;
+      left: 0;
+      border-bottom: 2px solid;
+      border-left: 2px solid;
+    }
+
+    .vf-br {
+      bottom: 0;
+      right: 0;
+      border-bottom: 2px solid;
+      border-right: 2px solid;
+    }
+
+    .vf-center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+    }
+
+    .vf-center:before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: -4px;
+      right: -4px;
+      height: 1px;
+      background: rgba(255, 255, 255, .4);
+    }
+
+    .vf-center:after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: -4px;
+      bottom: -4px;
+      width: 1px;
+      background: rgba(255, 255, 255, .4);
+    }
+
+    /* ==========================================================
+       ANALYSIS OVERLAYS
+    ========================================================== */
+    .analysisOverlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      z-index: 12;
+    }
+
+    .analysisOverlay.show {
+      display: block;
+    }
+
+    .roadLine {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(82, 196, 26, .9) 0%, rgba(82, 196, 26, 0) 100%);
+      transform-origin: left center;
+      display: none;
+      box-shadow: 0 0 10px rgba(82, 196, 26, .5);
+    }
+
+    .eyeArrow {
+      position: absolute;
+      font-size: 20px;
+      color: var(--accent);
+      filter: drop-shadow(0 2px 5px #000);
+      animation: flowPulse 1.4s infinite ease-in-out;
+    }
+
+    @keyframes flowPulse {
+
+      0%,
+      100% {
+        opacity: .4;
+        transform: scale(.9);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+    }
+
+    /* ==========================================================
+       HINT & TOAST (ALIGNED DIRECTLY ABOVE SCENARIO PANEL)
+    ========================================================== */
+    .hint {
+      position: absolute;
+      left: 76px;
+      bottom: 290px;
+      width: min(500px, calc(100% - 100px));
+      max-height: calc(100vh - 340px);
+      overflow-y: auto;
+      z-index: 22;
+      padding: 16px 18px;
+      border: 1.5px solid rgba(230, 180, 92, .55);
+      background: rgba(12, 18, 14, .97);
+      backdrop-filter: blur(20px);
+      border-radius: 15px;
+      font-size: 11.5px;
+      display: none;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .75), 0 0 25px rgba(230, 180, 92, .18);
+      animation: slideUpHint .2s ease-out;
+    }
+
+    .hint.show {
+      display: block;
+    }
+
+    @keyframes slideUpHint {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hint-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .hint-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .hint-kicker {
+      font-size: 10.5px;
+      letter-spacing: .12em;
+      color: var(--accent);
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .hint-body {
+      color: #dae5de;
+      line-height: 1.55;
+    }
+
+    /* ==========================================================
+       EDUCATIONAL FEEDBACK POPUP (ABOVE SCENARIO PANEL)
+    ========================================================== */
+    .feedback-popup {
+      position: absolute;
+      left: 76px;
+      bottom: 290px;
+      width: min(500px, calc(100% - 100px));
+      max-height: calc(100vh - 340px);
+      overflow-y: auto;
+      z-index: 28;
+      padding: 16px 18px;
+      border: 1.5px solid var(--leaf);
+      border-radius: 15px;
+      background: rgba(12, 18, 14, .97);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .75), 0 0 25px rgba(82, 196, 26, .2);
+      display: none;
+      animation: slideUpFb .2s ease-out;
+    }
+
+    .feedback-popup.show {
+      display: block;
+    }
+
+    @keyframes slideUpFb {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fb-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .fb-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fb-kicker {
+      font-size: 10px;
+      letter-spacing: .12em;
+      color: var(--leaf);
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .fb-score {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .fb-close {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .15);
+      border-radius: 6px;
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .fb-close:hover {
+      background: rgba(255, 77, 79, .25);
+      border-color: var(--bad);
+      color: #fff;
+    }
+
+    .fb-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .fb-metric-card {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 8px 6px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2px;
+      transition: .2s;
+    }
+
+    .fb-metric-card:hover {
+      background: rgba(82, 196, 26, .08);
+      border-color: var(--leaf);
+    }
+
+    .fb-metric-header {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .fb-metric-card b {
+      display: block;
+      font-size: 15px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #f0f5f2;
+      font-weight: 800;
+      margin: 2px 0;
+    }
+
+    .fb-metric-card.good b {
+      color: #52c41a;
+    }
+
+    .fb-metric-card.warn b {
+      color: #facc15;
+    }
+
+    .fb-metric-card.bad b {
+      color: #f87171;
+    }
+
+    .fb-metric-sub {
+      font-size: 8.5px;
+      color: #a3b8ad;
+      line-height: 1.2;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .fb-educational-body {
+      font-size: 12px;
+      line-height: 1.55;
+      color: #c4d0ca;
+      background: rgba(0, 0, 0, .3);
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .fb-educational-body strong {
+      color: var(--good);
+      display: inline-block;
+      margin-bottom: 3px;
+    }
+
+    .fb-educational-body .fb-tip {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 255, 255, .1);
+      color: #ffd88a;
+      font-size: 11px;
+    }
+
+    #toast {
+      position: absolute;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-10px);
+      opacity: 0;
+      z-index: 30;
+      background: #141c17;
+      border: 1px solid var(--panel-border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      transition: .25s;
+      pointer-events: none;
+      box-shadow: 0 10px 30px #0008;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ==========================================================
+       HELP MODAL
+    ========================================================== */
+    .help {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(640px, calc(100% - 28px));
+      max-height: 90vh;
+      overflow-y: auto;
+      z-index: 45;
+      padding: 22px 24px;
+      border: 1.5px solid rgba(82, 196, 26, .35);
+      border-radius: 18px;
+      background: rgba(12, 18, 14, .98);
+      backdrop-filter: blur(24px);
+      display: none;
+      box-shadow: 0 30px 100px rgba(0, 0, 0, .85), 0 0 35px rgba(82, 196, 26, .15);
+      animation: zoomInHelp .22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes zoomInHelp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -47%) scale(0.96);
+      }
+
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .help.show {
+      display: block;
+    }
+
+    .help-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .help-kicker {
+      font-size: 10px;
+      letter-spacing: .14em;
+      color: var(--leaf);
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .help-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 3px;
+      letter-spacing: -.01em;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .help-card {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: .2s;
+    }
+
+    .help-card:hover {
+      background: rgba(255, 255, 255, .05);
+      border-color: rgba(255, 255, 255, .15);
+      transform: translateY(-2px);
+    }
+
+    .help-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .help-icon-wrap {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .icon-gizmo {
+      background: rgba(82, 196, 26, .18);
+      border: 1px solid rgba(82, 196, 26, .4);
+      color: var(--good);
+    }
+
+    .icon-monitor {
+      background: rgba(230, 180, 92, .18);
+      border: 1px solid rgba(230, 180, 92, .4);
+      color: var(--accent);
+    }
+
+    .icon-mission {
+      background: rgba(56, 189, 248, .18);
+      border: 1px solid rgba(56, 189, 248, .4);
+      color: var(--cyan);
+    }
+
+    .icon-keys {
+      background: rgba(168, 85, 247, .18);
+      border: 1px solid rgba(168, 85, 247, .4);
+      color: #c084fc;
+    }
+
+    .help-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #f5f8f6;
+      line-height: 1.25;
+    }
+
+    .help-card-subtitle {
+      font-size: 9.5px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .help-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+      color: #c4d0ca;
+      line-height: 1.4;
+    }
+
+    .help-feature-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      background: rgba(0, 0, 0, .25);
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 1px solid rgba(255, 255, 255, .04);
+    }
+
+    .help-feature-text {
+      flex: 1;
+    }
+
+    .help-badge {
+      padding: 1px 5px;
+      border-radius: 5px;
+      font-size: 9.5px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      display: inline-block;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .badge-g {
+      background: rgba(82, 196, 26, .25);
+      color: #52c41a;
+      border: 1px solid rgba(82, 196, 26, .5);
+    }
+
+    .badge-r {
+      background: rgba(255, 77, 79, .25);
+      color: #ff4d4f;
+      border: 1px solid rgba(255, 77, 79, .5);
+    }
+
+    .badge-cam {
+      background: rgba(230, 180, 92, .25);
+      color: var(--accent);
+      border: 1px solid rgba(230, 180, 92, .5);
+    }
+
+    .badge-gold {
+      background: rgba(230, 180, 92, .25);
+      color: var(--accent);
+      border: 1px solid rgba(230, 180, 92, .5);
+    }
+
+    .badge-step {
+      background: rgba(56, 189, 248, .25);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, .5);
+    }
+
+    .badge-eval {
+      background: rgba(82, 196, 26, .25);
+      color: #52c41a;
+      border: 1px solid rgba(82, 196, 26, .5);
+    }
+
+    .axis-x {
+      color: #f87171;
+      font-weight: 600;
+    }
+
+    .axis-y {
+      color: #4ade80;
+      font-weight: 600;
+    }
+
+    .axis-z {
+      color: #60a5fa;
+      font-weight: 600;
+    }
+
+    .help-keys-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .help-key-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, .3);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 7px;
+      padding: 5px 8px;
+    }
+
+    .help-key-pill kbd {
+      background: #1c2620;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-bottom: 2px solid rgba(255, 255, 255, .3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 1px 3px #0008;
+    }
+
+    .help-key-pill span {
+      font-size: 10.5px;
+      color: #d1ded7;
+      font-weight: 600;
+    }
+
+    .help-confirm-btn {
+      width: 100%;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      border-radius: 10px;
+    }
+
+    @media(max-width:850px) {
+      .cam-gizmo {
+        right: 12px;
+        top: 68px;
+        width: 240px;
+      }
+
+      .feedback-popup {
+        left: 16px;
+        bottom: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- 3D VIEWPORT CANVAS CONTAINER -->
+    <div id="scene"></div>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="brand">
+        <span>🌱 SABIR FİDANI</span>
+        <span class="brand-badge">DEDE & TORUN</span>
+      </div>
+
+      <!-- VIEW MODE SWITCHER TABS -->
+      <div class="view-mode-tabs">
+        <button class="view-tab active" id="tabGodView">🎥 3D Editör & Kamera Taşı</button>
+        <button class="view-tab" id="tabDirectorPOV">🎬 Yönetmen Kadrajı (POV)</button>
+      </div>
+
+      <!-- STUDIO ACTION BUTTONS: SCREENSHOT, EXPORT, SHARE, COLLECTION -->
+      <div class="top-actions-cluster">
+        <button class="top-action-btn" id="btnScreenshot" title="Ekran Görüntüsü Al (S)">
+          <span>📷</span>
+          <span>Foto</span>
+          <kbd>S</kbd>
+        </button>
+        <button class="top-action-btn" id="btnExport" title="Kadrajı ve Çekim Parametrelerini Dışa Aktar (E)">
+          <span>📥</span>
+          <span>Export</span>
+          <kbd>E</kbd>
+        </button>
+        <button class="top-action-btn" id="btnShare" title="Kadraj Bağlantısını Paylaş (C)">
+          <span>🔗</span>
+          <span>Paylaş</span>
+          <kbd>C</kbd>
+        </button>
+        <button class="top-action-btn" id="btnCollection" title="Koleksiyona Ekle / Galeriyi Aç (F)">
+          <span>⭐</span>
+          <span>Koleksiyon</span>
+          <span class="coll-count-badge" id="collCountBadge">0</span>
+          <kbd>F</kbd>
+        </button>
+      </div>
+
+      <div class="topmeta">
+        <button class="scenario-btn" id="scenarioBtn">
+          <span>🎬 Senaryo:</span>
+          <span id="topScenarioLabel">01 · Geniş Çekim & Boş Alan</span>
+          <span style="font-size:9px">▾</span>
+        </button>
+        <button class="iconbtn" id="helpBtn" title="Nasıl Kullanılır?">?</button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR (LEFT) -->
+    <div class="toolbar">
+      <button class="toolbtn active" id="modeTranslateBtn" data-tip="Taşıma Okları (G)">✥</button>
+      <button class="toolbtn" id="modeRotateBtn" data-tip="Döndürme Halkaları (R)">⟳</button>
+      <button class="toolbtn" id="gridBtn" data-tip="1/3 Kılavuz Çizgileri">⊞</button>
+      <button class="toolbtn" id="eyeBtn" data-tip="Göz Akışı Çizgisi">👁</button>
+      <button class="toolbtn" id="lineBtn" data-tip="Perspektif Kaçış Çizgileri">☷</button>
+    </div>
+
+    <!-- CAMERA CONTROL PANEL & BLENDER GIZMO HUD -->
+    <div class="cam-gizmo" id="camGizmo">
+      <div class="gizmo-header">
+        <div class="gizmo-title">
+          <span class="active-dot"></span>
+          <span>SİNEMA KAMERASI</span>
+        </div>
+        <button class="gizmo-close" id="closeGizmoBtn" title="Kapat">✕</button>
+      </div>
+
+      <div class="gizmo-mode-tabs">
+        <button class="g-mode-btn active" id="gTabTranslate">✥ Taşı (G)</button>
+        <button class="g-mode-btn" id="gTabRotate">⟳ Döndür (R)</button>
+      </div>
+
+      <div class="gizmo-body">
+        <div class="gizmo-control-group">
+          <span class="gizmo-lbl">YÜKSEKLİK (Y)</span>
+          <div class="gizmo-stepper">
+            <button class="g-step-btn" id="camHeightDown">−</button>
+            <span class="g-val" id="camHeightVal">1.8m</span>
+            <button class="g-step-btn" id="camHeightUp">+</button>
+          </div>
+        </div>
+
+        <div class="gizmo-control-group">
+          <span class="gizmo-lbl">DİKEY EĞİM (TILT)</span>
+          <div class="gizmo-stepper">
+            <button class="g-step-btn" id="camPitchDown">▼</button>
+            <span class="g-val" id="camPitchVal">-4°</span>
+            <button class="g-step-btn" id="camPitchUp">▲</button>
+          </div>
+        </div>
+
+        <div class="gizmo-control-group">
+          <span class="gizmo-lbl">YATAY AÇI (PAN)</span>
+          <div class="gizmo-stepper">
+            <button class="g-step-btn" id="camYawLeft">◀</button>
+            <span class="g-val" id="camYawVal">-18°</span>
+            <button class="g-step-btn" id="camYawRight">▶</button>
+          </div>
+        </div>
+
+        <div class="gizmo-control-group" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <span class="gizmo-lbl">LENS ODAK UZAKLIĞI (FOV)</span>
+          <div class="gizmo-lens-pills">
+            <button class="g-lens-btn active" data-fov="62" data-lens="35mm">35mm</button>
+            <button class="g-lens-btn" data-fov="44" data-lens="50mm">50mm</button>
+            <button class="g-lens-btn" data-fov="28" data-lens="85mm">85mm</button>
+          </div>
+        </div>
+
+        <div class="gizmo-control-group" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <span class="gizmo-lbl">HAZIR KAMERA AÇILARI</span>
+          <div class="gizmo-quick-presets">
+            <button class="g-preset-pill" id="preLow">🌱 Düşük Açı</button>
+            <button class="g-preset-pill" id="preEye">👁 Göz Hizası</button>
+            <button class="g-preset-pill" id="preHigh">🦅 Üst Açı</button>
+          </div>
+        </div>
+      </div>
+      <div class="gizmo-drag-tip">💡 3D sahnede kameranın renkli oklarını sürükleyebilirsiniz</div>
+    </div>
+
+    <!-- SCENARIO PANEL (BOTTOM LEFT) -->
+    <div class="scenario" id="scenarioPanel">
+      <div class="scenario-top-nav">
+        <span class="kicker" id="scKicker">GÖREV 01 · GENİŞ ÇEKİM & BOŞ ALAN</span>
+        <div class="sc-nav-arrows">
+          <button class="sc-arrow-btn" id="scPrevBtn" title="Önceki Görev" disabled>◀</button>
+          <button class="sc-arrow-btn" id="scNextBtn" title="Sonraki Görev">▶</button>
+          <button class="sc-pill-btn" id="scListBtn" title="Tüm Senaryolar">📜 Görevler</button>
+        </div>
+      </div>
+      <h1 id="scTitle">Bahçeye İlk Adım & Boş Alan</h1>
+      <p id="scDesc">
+        Dede ve torun fidan dikecekleri geniş bahçede toprağı hazırlıyor. 3D Kamerayı geniş açıya (35mm) alıp ikiliyi vizörün alt 1/3 bandına yerleştirerek önlerindeki sabırlı emeğin büyüklüğünü ve gökyüzü boşluğunu (Negatif Alan) hissettir.
+      </p>
+      <div class="actions">
+        <button class="btn primary" id="analyzeBtn">🎬 Kadrajı Değerlendir</button>
+        <button class="btn" id="playBtn">▶ Fidan Dikim Animasyonu</button>
+        <button class="btn" id="hintBtn">💡 İpucu</button>
+        <button class="btn" id="resetBtn">↺ Sıfırla</button>
+      </div>
+
+      <!-- ATTEMPT PROGRESS PIPS (10'LU İLERLEME NOKTALARI) & AUTO-SOLVE BUTTON -->
+      <div class="attempt-tracker-wrap" id="attemptTrackerWrap">
+        <div class="attempt-pips-row">
+          <span class="attempt-lbl">🎯 Çözüm Kilidi:</span>
+          <div class="attempt-pips" id="attemptPips">
+            <span class="pip" data-i="0" title="1. Deneme"></span>
+            <span class="pip" data-i="1" title="2. Deneme"></span>
+            <span class="pip" data-i="2" title="3. Deneme"></span>
+            <span class="pip" data-i="3" title="4. Deneme"></span>
+            <span class="pip" data-i="4" title="5. Deneme"></span>
+            <span class="pip" data-i="5" title="6. Deneme"></span>
+            <span class="pip" data-i="6" title="7. Deneme"></span>
+            <span class="pip" data-i="7" title="8. Deneme"></span>
+            <span class="pip" data-i="8" title="9. Deneme"></span>
+            <span class="pip" data-i="9" title="10. Deneme"></span>
+          </div>
+          <span class="attempt-count" id="attemptCountLabel">0/10 Deneme</span>
+        </div>
+        <button class="auto-solve-btn" id="autoSolveBtn">
+          ✨ Yönetmen Çözümünü Göster & Uygula
+        </button>
+      </div>
+    </div>
+
+    <!-- EDUCATIONAL EVALUATION POPUP -->
+    <div class="feedback-popup" id="feedbackPopup">
+      <div class="fb-header">
+        <div class="fb-title-wrap">
+          <span class="fb-kicker">YÖNETMENLİK KARNESİ</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="fb-score" id="fbScore">88 / 100</span>
+          <button class="fb-close" id="fbCloseBtn" title="Kapat">✕</button>
+        </div>
+      </div>
+
+      <div class="fb-metrics-grid">
+        <div class="fb-metric-card" id="cardFocus" title="Karakterlerin vizördeki 1/3 altın kesişim çizgilerine ve güç noktalarına oturma hassasiyeti">
+          <div class="fb-metric-header">📐 1/3 Kuralı</div>
+          <b id="fbFocus">92%</b>
+          <div class="fb-metric-sub" id="fbFocusSub">Alt 1/3 Hizası</div>
+        </div>
+        <div class="fb-metric-card" id="cardFlow" title="Karakterin baktığı yöndeki eylem alanı (Lead Room) ve ikili çekimdeki sol/sağ görsel denge">
+          <div class="fb-metric-header">👁️ Bakış & Denge</div>
+          <b id="fbFlow">88%</b>
+          <div class="fb-metric-sub" id="fbFlowSub">Bakış Yönü Dengeli</div>
+        </div>
+        <div class="fb-metric-card" id="cardTension" title="Sahnenin temasına ve storyboard paneline uygun kamera yüksekliği, yakınlık ve açı duygusu">
+          <div class="fb-metric-header">🎭 Duygu & Ritim</div>
+          <b id="fbTension">85%</b>
+          <div class="fb-metric-sub" id="fbTensionSub">Göz Hizası Yakın Çekim</div>
+        </div>
+        <div class="fb-metric-card" id="cardSpace" title="Gökyüzü, zemin veya çevrede bırakılan nefes alanı (Negatif Alan) ve lens FOV genişliği">
+          <div class="fb-metric-header">🌌 Boş Alan Payı</div>
+          <b id="fbSpace">87%</b>
+          <div class="fb-metric-sub" id="fbSpaceSub">Geniş Atmosfer</div>
+        </div>
+      </div>
+
+      <div class="fb-educational-body" id="fbEducationalBody">
+        <!-- Generated dynamically via evaluateComposition() -->
+      </div>
+    </div>
+
+    <!-- CAMERA MONITOR (LIVE VIEWFINDER BOTTOM RIGHT) -->
+    <div class="monitor" id="monitor">
+      <div class="monitor-header">
+        <span class="rec">REC ● [4K]</span>
+        <div class="monitor-tools">
+          <button class="mon-btn" id="monGridBtn" title="Vizörde 1/3 Izgarasını Aç/Kapat">⊞</button>
+          <button class="mon-btn" id="expandMonitorBtn" title="Vizörü Büyüt/Küçült">⤢</button>
+        </div>
+      </div>
+
+      <!-- 1/3 RULE OF THIRDS GRID ON VIEWFINDER MONITOR -->
+      <div class="monitor-grid show" id="monitorGrid">
+        <i class="m-v1"></i>
+        <i class="m-v2"></i>
+        <i class="m-h1"></i>
+        <i class="m-h2"></i>
+        <div class="m-point mp1" id="mp1" title="Sol Üst 1/3"></div>
+        <div class="m-point mp2" id="mp2" title="Sağ Üst 1/3"></div>
+        <div class="m-point mp3" id="mp3" title="Sol Alt 1/3"></div>
+        <div class="m-point mp4" id="mp4" title="Sağ Alt 1/3"></div>
+      </div>
+
+      <div class="monitor-viewfinder-grid">
+        <div class="vf-corner vf-tl"></div>
+        <div class="vf-corner vf-tr"></div>
+        <div class="vf-corner vf-bl"></div>
+        <div class="vf-corner vf-br"></div>
+        <div class="vf-center"></div>
+      </div>
+
+      <canvas id="preview"></canvas>
+    </div>
+
+    <!-- DYNAMIC PERSPECTIVE & EYE FLOW OVERLAYS -->
+    <div class="analysisOverlay" id="analysisOverlay">
+      <div class="roadLine" id="roadLine1"></div>
+      <div class="roadLine" id="roadLine2"></div>
+      <div class="eyeArrow" id="eyeArrow1">➔</div>
+      <div class="eyeArrow" id="eyeArrow2">➔</div>
+      <div class="eyeArrow" id="eyeArrow3">➔</div>
+    </div>
+
+    <!-- SHUTTER FLASH EFFECT -->
+    <div class="shutter-flash" id="shutterFlash"></div>
+
+    <!-- REPOSITIONED TOP-LEFT HINT MODAL CARD -->
+    <div class="hint" id="hint">
+      <div class="hint-header">
+        <div class="hint-title-wrap">
+          <span class="hint-icon">💡</span>
+          <span class="hint-kicker">YÖNETMEN İPUCU</span>
+        </div>
+        <button class="fb-close" id="closeHintBtn" title="Kapat">✕</button>
+      </div>
+      <div class="hint-body" id="hintBody">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast"></div>
+
+    <!-- MY COLLECTION MODAL (SAVED FRAMES GALLERY) -->
+    <div class="collection-modal" id="collectionModal">
+      <div class="collection-card">
+        <div class="collection-header">
+          <div>
+            <span class="sc-modal-kicker">KAYITLI KADRAJLARIM</span>
+            <h2 style="color:#fff;font-size:18px;margin-top:2px">⭐ Sinematik Koleksiyon & Storyboard</h2>
+          </div>
+          <button class="fb-close" id="closeCollectionModalBtn" title="Kapat">✕</button>
+        </div>
+
+        <div class="collection-grid" id="collectionGrid">
+          <!-- Rendered dynamically via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SCENARIO SELECTION MODAL -->
+    <div class="scenario-modal" id="scenarioModal">
+      <div class="sc-modal-card">
+        <div class="sc-modal-header">
+          <div>
+            <span class="sc-modal-kicker">SABIR FİDANI HİKAYESİ · STORYBOARD ATÖLYESİ</span>
+            <h2>10 Seviyeli Sinematik Kompozisyon Görevleri</h2>
+          </div>
+          <button class="fb-close" id="closeScenarioModalBtn" title="Kapat">✕</button>
+        </div>
+
+        <div class="sc-grid" id="scenarioGrid">
+          <!-- Rendered dynamically via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- HELP MODAL -->
+    <div class="help" id="help">
+      <div class="help-header">
+        <div>
+          <span class="help-kicker">HIZLI BAŞLANGIÇ KILAVUZU</span>
+          <h2>3D Kamera Stüdyosu Nasıl Kullanılır?</h2>
+        </div>
+        <button class="fb-close" id="closeHelpX" title="Kapat">✕</button>
+      </div>
+
+      <div class="help-grid">
+        <!-- Card 1: 3D Gizmo Okları -->
+        <div class="help-card">
+          <div class="help-card-head">
+            <div class="help-icon-wrap icon-gizmo">✥</div>
+            <div>
+              <div class="help-card-title">3D Gizmo Kontrolleri</div>
+              <div class="help-card-subtitle">Blender tarzı bahçe yönetimi</div>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <div class="help-feature-row">
+              <span class="help-badge badge-g">G</span>
+              <div class="help-feature-text"><b>Taşıma Okları:</b> <span class="axis-x">🔴 X (Yatay)</span> · <span class="axis-y">🟢 Y (Yükseklik)</span> · <span class="axis-z">🔵 Z (Derinlik)</span></div>
+            </div>
+            <div class="help-feature-row">
+              <span class="help-badge badge-r">R</span>
+              <div class="help-feature-text"><b>Döndürme Halkaları:</b> <span class="axis-y">🟢 Pan (Yatay)</span> · <span class="axis-x">🔴 Tilt (Dikey Açı)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Canlı Vizör & 1/3 Kuralı -->
+        <div class="help-card">
+          <div class="help-card-head">
+            <div class="help-icon-wrap icon-monitor">🎬</div>
+            <div>
+              <div class="help-card-title">Canlı Vizör & 1/3 Izgarası</div>
+              <div class="help-card-subtitle">Yönetmenin gerçek gözü</div>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <div class="help-feature-row">
+              <span class="help-badge badge-cam">📐</span>
+              <div class="help-feature-text">Sağ alttaki ekran <b>kamera kadrajının canlı önizlemesidir</b>.</div>
+            </div>
+            <div class="help-feature-row">
+              <span class="help-badge badge-gold">🎯</span>
+              <div class="help-feature-text"><b>1/3 Güç Noktaları:</b> Karakter kesişim çizgilerine gelince noktalar <span style="color:#52c41a;font-weight:700">yeşile döner</span>.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Görevler & Değerlendirme -->
+        <div class="help-card">
+          <div class="help-card-head">
+            <div class="help-icon-wrap icon-mission">🌱</div>
+            <div>
+              <div class="help-card-title">Sabır Fidanı Görevleri & Karne</div>
+              <div class="help-card-subtitle">10 seviyeli storyboard müfredatı</div>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <div class="help-feature-row">
+              <span class="help-badge badge-step">1-10</span>
+              <div class="help-feature-text">Üstteki <b>Senaryo</b> menüsünden görevleri keşfedin.</div>
+            </div>
+            <div class="help-feature-row">
+              <span class="help-badge badge-eval">✓</span>
+              <div class="help-feature-text"><b>🎬 Kadrajı Değerlendir</b> butonuna basıp <b>≥70 puan</b> alarak sonraki kilitleri açın.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Kısayollar & Araçlar -->
+        <div class="help-card">
+          <div class="help-card-head">
+            <div class="help-icon-wrap icon-keys">⚡</div>
+            <div>
+              <div class="help-card-title">Hızlı Klavye Kısayolları</div>
+              <div class="help-card-subtitle">Pratik iş akışı tuşları</div>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <div class="help-keys-list">
+              <div class="help-key-pill"><kbd>G</kbd> <span>Taşıma Modu</span></div>
+              <div class="help-key-pill"><kbd>R</kbd> <span>Döndürme Modu</span></div>
+              <div class="help-key-pill"><kbd>ESC</kbd> <span>Pencereleri Kapat</span></div>
+              <div class="help-key-pill"><kbd>🎥</kbd> <span>Lens & Hazır Açı</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn primary help-confirm-btn" id="closeHelp">Harika, Anladım ve Başla ▶</button>
+    </div>
+
+  </div>
+
+  <!-- THREE.JS & ORBITCONTROLS & TRANSFORMCONTROLS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ==========================================================
+         0. TOAST NOTIFICATION HELPER
+      ========================================================== */
+      let toastTimeout = null;
+      function toast(msg) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.add('show');
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          if (t) t.classList.remove('show');
+        }, 2400);
+      }
+
+      /* ==========================================================
+         1. SCENE & DUAL CAMERA SETUP
+      ========================================================== */
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x3e7cb1); // Deep, rich, vibrant cinematic blue sky
+      scene.fog = new THREE.Fog(0x3e7cb1, 45, 115); // Clean foreground with soft far horizon
+
+      // Main God/Editor Camera
+      const editorCamera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 150);
+      editorCamera.position.set(13, 10, 18);
+
+      // Main Renderer
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 0.94; // Deep, rich contrast without white burnout
+      document.getElementById('scene').appendChild(renderer.domElement);
+
+      // OrbitControls for God View
+      const editorControls = new THREE.OrbitControls(editorCamera, renderer.domElement);
+      editorControls.enableDamping = true;
+      editorControls.dampingFactor = 0.05;
+      editorControls.maxPolarAngle = Math.PI / 2 - 0.02;
+      editorControls.minDistance = 3;
+      editorControls.maxDistance = 60;
+      editorControls.target.set(0, 1.2, 0);
+
+      // Live Viewfinder / Shot Camera
+      let cameraFov = 62;
+      const shotCamera = new THREE.PerspectiveCamera(cameraFov, 320 / 195, 0.1, 100);
+
+      const previewCanvas = document.getElementById('preview');
+      const previewRenderer = new THREE.WebGLRenderer({ canvas: previewCanvas, antialias: true });
+      previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      previewRenderer.setSize(320, 195);
+      previewRenderer.shadowMap.enabled = true;
+      previewRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      previewRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      previewRenderer.toneMappingExposure = 0.96;
+
+      /* ==========================================================
+         2. LIGHTING (WARM GOLDEN PIXAR LIGHTING - NO WHITE WASH)
+      ========================================================== */
+      // Soft Sky and Warm Grass Bounce
+      const hemi = new THREE.HemisphereLight(0x78a6d6, 0x224228, 0.85);
+      scene.add(hemi);
+
+      // Warm Golden Honey Sun Directional Light (Warm amber tint instead of harsh white)
+      const sun = new THREE.DirectionalLight(0xffbf69, 1.75);
+      sun.position.set(24, 30, 16);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 2048;
+      sun.shadow.mapSize.height = 2048;
+      sun.shadow.camera.near = 0.5;
+      sun.shadow.camera.far = 80;
+      sun.shadow.camera.left = -28;
+      sun.shadow.camera.right = 28;
+      sun.shadow.camera.top = 28;
+      sun.shadow.camera.bottom = -28;
+      sun.shadow.bias = -0.0003;
+      scene.add(sun);
+
+      // Gentle Warm Ambient Fill (Prevents stark black shadows with warm amber tone)
+      const warmFill = new THREE.AmbientLight(0xffeedd, 0.25);
+      scene.add(warmFill);
+
+      /* ==========================================================
+         3. 3D GARDEN ENVIRONMENT (COLORFUL WARM SPRING WORLD)
+      ========================================================== */
+      // 1. Lush Deep Emerald Spring Grass Ground
+      const groundGeo = new THREE.PlaneGeometry(140, 140, 32, 32);
+      const groundMat = new THREE.MeshStandardMaterial({
+        color: 0x2d6a4f, // Rich deep emerald green
+        roughness: 0.85,
+        metalness: 0.02
+      });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Soil Patch (Tarh / Planting Bed) in center
+      const soilGeo = new THREE.CylinderGeometry(4.5, 4.8, 0.12, 32);
+      const soilMat = new THREE.MeshStandardMaterial({
+        color: 0x3e2723, // Warm dark chocolate loam
+        roughness: 0.9,
+        metalness: 0.0
+      });
+      const soilPatch = new THREE.Mesh(soilGeo, soilMat);
+      soilPatch.position.set(0, 0.06, 0);
+      soilPatch.receiveShadow = true;
+      scene.add(soilPatch);
+
+      // Stepping Stones / Cobblestone Path
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x948b81, roughness: 0.8 });
+      for (let i = -7; i <= 7; i++) {
+        const stoneGeo = new THREE.BoxGeometry(1.2 + Math.random() * 0.4, 0.08, 0.9 + Math.random() * 0.3);
+        const stone = new THREE.Mesh(stoneGeo, stoneMat);
+        stone.position.set(-3.8 + (Math.random() - 0.5) * 0.3, 0.05, i * 2.2);
+        stone.rotation.y = (Math.random() - 0.5) * 0.3;
+        stone.receiveShadow = true;
+        scene.add(stone);
+      }
+
+      // Wooden Fence (Warm Rustic Honey Wood Çit)
+      const fenceMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+      function createFenceSegment(x, z, rotY) {
+        const group = new THREE.Group();
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.3, 0.12), fenceMat);
+        post.position.y = 0.65;
+        post.castShadow = true;
+        group.add(post);
+
+        const r1 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.05), fenceMat);
+        r1.position.set(1.2, 0.4, 0);
+        group.add(r1);
+
+        const r2 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 0.05), fenceMat);
+        r2.position.set(1.2, 0.9, 0);
+        group.add(r2);
+
+        for (let p = 0; p < 4; p++) {
+          const slat = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 0.03), fenceMat);
+          slat.position.set(0.3 + p * 0.6, 0.55, 0);
+          slat.castShadow = true;
+          group.add(slat);
+        }
+
+        group.position.set(x, 0, z);
+        group.rotation.y = rotY;
+        scene.add(group);
+      }
+
+      for (let f = -14; f <= 12; f += 2.4) {
+        createFenceSegment(f, -9, 0);
+      }
+
+      // 🌸 COLORFUL SPRING FLOWER BEDS & SHRUBS (Vibrant Warm Palette)
+      const bushColors = [0x386641, 0x40916c, 0x52b788, 0x2d6a4f];
+      const flowerColors = [
+        0xe63946, // Rich Coral Red
+        0xf4a261, // Warm Apricot Orange
+        0xe76f51, // Terracotta Blossom
+        0x9b5de5, // Lavender Purple
+        0xf15bb5, // Rose Pink
+        0xfb8500  // Golden Marigold
+      ];
+
+      for (let b = 0; b < 28; b++) {
+        const bushGeo = new THREE.DodecahedronGeometry(0.65 + Math.random() * 0.45, 1);
+        const bushMat = new THREE.MeshStandardMaterial({
+          color: bushColors[b % bushColors.length],
+          roughness: 0.7
+        });
+        const bush = new THREE.Mesh(bushGeo, bushMat);
+        const ang = (b / 28) * Math.PI * 2;
+        const rad = 6.2 + Math.random() * 4.5;
+        bush.position.set(Math.cos(ang) * rad, 0.45 + Math.random() * 0.35, Math.sin(ang) * rad);
+        bush.castShadow = true;
+        scene.add(bush);
+
+        // Clustered colorful flower blossoms
+        for (let fl = 0; fl < 3; fl++) {
+          const flw = new THREE.Mesh(
+            new THREE.SphereGeometry(0.14 + Math.random() * 0.06, 8, 8),
+            new THREE.MeshStandardMaterial({
+              color: flowerColors[(b + fl * 2) % flowerColors.length],
+              roughness: 0.4
+            })
+          );
+          flw.position.set(
+            bush.position.x + (Math.random() - 0.5) * 0.5,
+            bush.position.y + 0.4 + fl * 0.12,
+            bush.position.z + (Math.random() - 0.5) * 0.5
+          );
+          scene.add(flw);
+        }
+      }
+
+      // ☁️ SOFT WARM-TINTED PIXAR CLOUDS (Soft warm peach glow, subtle opacity)
+      const cloudGroup = new THREE.Group();
+      const cloudMat = new THREE.MeshStandardMaterial({
+        color: 0xfde2ce, // Soft warm peach tint (not stark white)
+        roughness: 0.8,
+        transparent: true,
+        opacity: 0.55
+      });
+
+      function createCloud(x, y, z, scale) {
+        const c = new THREE.Group();
+        const numPuffs = 4 + Math.floor(Math.random() * 2);
+        for (let p = 0; p < numPuffs; p++) {
+          const puff = new THREE.Mesh(
+            new THREE.SphereGeometry((1.2 + Math.random() * 0.7) * scale, 10, 10),
+            cloudMat
+          );
+          puff.position.set((p - numPuffs / 2) * 1.3 * scale, (Math.random() - 0.5) * 0.6 * scale, (Math.random() - 0.5) * 0.9 * scale);
+          c.add(puff);
+        }
+        c.position.set(x, y, z);
+        cloudGroup.add(c);
+      }
+
+      createCloud(-18, 22, -15, 1.2);
+      createCloud(8, 26, -20, 1.4);
+      createCloud(22, 20, -10, 1.1);
+      createCloud(-6, 24, 18, 1.3);
+      scene.add(cloudGroup);
+
+      // Cozy Rustic Cottage in Background (Warm Wood & Terracotta)
+      const shedGroup = new THREE.Group();
+      const shedBase = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 4.5, 5),
+        new THREE.MeshStandardMaterial({ color: 0xa0714f, roughness: 0.85 }) // Warm rustic wood
+      );
+      shedBase.position.y = 2.25;
+      shedBase.castShadow = true;
+      shedGroup.add(shedBase);
+
+      const shedRoof = new THREE.Mesh(
+        new THREE.ConeGeometry(5.2, 2.2, 4),
+        new THREE.MeshStandardMaterial({ color: 0xb85d38, roughness: 0.7 }) // Terracotta tile roof
+      );
+      shedRoof.position.y = 5.2;
+      shedRoof.rotation.y = Math.PI / 4;
+      shedRoof.castShadow = true;
+      shedGroup.add(shedRoof);
+
+      shedGroup.position.set(14, 0, -12);
+      scene.add(shedGroup);
+
+      // Background Big Blooming Trees
+      function createTree(x, z, scale, crownColor = 0x2d6a4f) {
+        const treeGroup = new THREE.Group();
+        const trunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.4 * scale, 0.6 * scale, 4 * scale, 8),
+          new THREE.MeshStandardMaterial({ color: 0x4a3525, roughness: 0.9 })
+        );
+        trunk.position.y = 2 * scale;
+        trunk.castShadow = true;
+        treeGroup.add(trunk);
+
+        const crown = new THREE.Mesh(
+          new THREE.DodecahedronGeometry(2.6 * scale, 1),
+          new THREE.MeshStandardMaterial({ color: crownColor, roughness: 0.75 })
+        );
+        crown.position.y = 4.5 * scale;
+        crown.castShadow = true;
+        treeGroup.add(crown);
+
+        treeGroup.position.set(x, 0, z);
+        scene.add(treeGroup);
+      }
+
+      createTree(-16, -14, 1.4, 0x2d6a4f);
+      createTree(-8, -16, 1.2, 0x40916c);
+      createTree(6, -18, 1.5, 0x1b4332);
+      createTree(20, -6, 1.3, 0x2d6a4f);
+
+      /* ==========================================================
+         4. CENTRAL PROPS (SABIR FİDANI, KÜREK, SULAMA KABI)
+      ========================================================== */
+      // 1. SABIR FİDANI (Central Sapling)
+      const saplingGroup = new THREE.Group();
+      const saplingStem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.07, 0.9, 8),
+        new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.75 })
+      );
+      saplingStem.position.y = 0.45;
+      saplingStem.castShadow = true;
+      saplingGroup.add(saplingStem);
+
+      // Leaves on Sapling (Fresh vibrant spring green)
+      const leafMat = new THREE.MeshStandardMaterial({ color: 0x66bb6a, roughness: 0.35, metalness: 0.1 });
+      for (let l = 0; l < 9; l++) {
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), leafMat);
+        leaf.scale.set(1.4, 0.2, 0.7);
+        const lAngle = (l / 9) * Math.PI * 2;
+        leaf.position.set(Math.cos(lAngle) * 0.2, 0.4 + (l * 0.06), Math.sin(lAngle) * 0.2);
+        leaf.rotation.y = lAngle;
+        leaf.rotation.z = 0.3;
+        leaf.castShadow = true;
+        saplingGroup.add(leaf);
+      }
+      saplingGroup.position.set(0, 0.1, 0);
+      scene.add(saplingGroup);
+
+      // 2. Bahçe Küreği (Trowel/Shovel)
+      const shovelGroup = new THREE.Group();
+      const sHandle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.025, 0.025, 0.5, 8),
+        new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
+      );
+      sHandle.position.y = 0.25;
+      shovelGroup.add(sHandle);
+      const sBlade = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.22, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0x71717a, metalness: 0.7, roughness: 0.3 })
+      );
+      sBlade.position.y = 0.05;
+      shovelGroup.add(sBlade);
+      shovelGroup.position.set(-0.8, 0.05, 0.6);
+      shovelGroup.rotation.z = Math.PI / 3;
+      shovelGroup.rotation.y = 0.5;
+      scene.add(shovelGroup);
+
+      // 3. Sulama Kabı (Watering Can)
+      const waterCanGroup = new THREE.Group();
+      const canBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.28, 0.45, 16),
+        new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.4, metalness: 0.3 })
+      );
+      canBody.position.y = 0.225;
+      canBody.castShadow = true;
+      waterCanGroup.add(canBody);
+
+      const canSpout = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.06, 0.4, 8),
+        new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.4 })
+      );
+      canSpout.position.set(0.25, 0.3, 0);
+      canSpout.rotation.z = -Math.PI / 4;
+      waterCanGroup.add(canSpout);
+      waterCanGroup.position.set(0.9, 0.05, 0.8);
+      scene.add(waterCanGroup);
+
+      /* ==========================================================
+         5. PROCEDURAL 3D PIXAR CHARACTERS (DEDE & TORUN)
+      ========================================================== */
+      // 1. DEDE (Grandfather - 70yo kind elder with beard & vest)
+      const dedeGroup = new THREE.Group();
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffd1b3, roughness: 0.6 });
+      const clothVestMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 }); // Brown vest
+      const clothShirtMat = new THREE.MeshStandardMaterial({ color: 0xd9c8b4, roughness: 0.75 }); // Cream shirt
+      const pantsMat = new THREE.MeshStandardMaterial({ color: 0x4a4036, roughness: 0.85 }); // Dark pants
+      const beardMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.9 }); // White beard
+
+      // Dede Body (Kneeling posture)
+      const dedeTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.75, 12), clothVestMat);
+      dedeTorso.position.y = 0.75;
+      dedeTorso.castShadow = true;
+      dedeGroup.add(dedeTorso);
+
+      // Dede Head
+      const dedeHead = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), skinMat);
+      dedeHead.position.set(0, 1.25, 0.05);
+      dedeHead.castShadow = true;
+      dedeGroup.add(dedeHead);
+
+      // Dede White Beard & Hair
+      const dedeBeard = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), beardMat);
+      dedeBeard.scale.set(0.9, 1.1, 0.8);
+      dedeBeard.position.set(0, 1.14, 0.16);
+      dedeGroup.add(dedeBeard);
+
+      const dedeHair = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 12), beardMat);
+      dedeHair.scale.set(1.02, 0.6, 1.02);
+      dedeHair.position.set(0, 1.38, -0.02);
+      dedeGroup.add(dedeHair);
+
+      // Dede Arms & Hands (Reaching towards soil/sapling)
+      const dedeArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.6, 8), clothShirtMat);
+      dedeArmL.position.set(-0.38, 0.75, 0.2);
+      dedeArmL.rotation.x = Math.PI / 4;
+      dedeGroup.add(dedeArmL);
+
+      const dedeArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.6, 8), clothShirtMat);
+      dedeArmR.position.set(0.38, 0.75, 0.2);
+      dedeArmR.rotation.x = Math.PI / 4;
+      dedeGroup.add(dedeArmR);
+
+      // Dede Legs (Kneeling)
+      const dedeLegL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.55), pantsMat);
+      dedeLegL.position.set(-0.2, 0.2, -0.15);
+      dedeGroup.add(dedeLegL);
+
+      const dedeLegR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.55), pantsMat);
+      dedeLegR.position.set(0.2, 0.2, -0.15);
+      dedeGroup.add(dedeLegR);
+
+      dedeGroup.position.set(0.8, 0, 0.2);
+      dedeGroup.rotation.y = -Math.PI / 2.5;
+      scene.add(dedeGroup);
+
+      // 2. TORUN (Grandson - 7yo boy with blue shirt & shorts)
+      const torunGroup = new THREE.Group();
+      const torunShirtMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.6 }); // Sky blue shirt
+      const torunShortsMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 }); // Khaki shorts
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x271c19, roughness: 0.9 }); // Dark hair
+
+      // Torun Torso
+      const torunTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.5, 12), torunShirtMat);
+      torunTorso.position.y = 0.65;
+      torunTorso.castShadow = true;
+      torunGroup.add(torunTorso);
+
+      // Torun Head (Big cute Pixar proportions)
+      const torunHead = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), skinMat);
+      torunHead.position.set(0, 1.05, 0.02);
+      torunHead.castShadow = true;
+      torunGroup.add(torunHead);
+
+      // Torun Dark Hair
+      const torunHair = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 14), hairMat);
+      torunHair.scale.set(1.02, 0.7, 1.05);
+      torunHair.position.set(0, 1.16, -0.02);
+      torunGroup.add(torunHair);
+
+      // Torun Legs
+      const tLegL = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.45, 8), torunShortsMat);
+      tLegL.position.set(-0.12, 0.22, 0);
+      torunGroup.add(tLegL);
+
+      const tLegR = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.06, 0.45, 8), torunShortsMat);
+      tLegR.position.set(0.12, 0.22, 0);
+      torunGroup.add(tLegR);
+
+      // Torun Arms
+      const tArmL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.4, 8), skinMat);
+      tArmL.position.set(-0.25, 0.6, 0.1);
+      tArmL.rotation.x = Math.PI / 6;
+      torunGroup.add(tArmL);
+
+      const tArmR = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.4, 8), skinMat);
+      tArmR.position.set(0.25, 0.6, 0.1);
+      tArmR.rotation.x = Math.PI / 6;
+      torunGroup.add(tArmR);
+
+      torunGroup.position.set(-0.9, 0, 0.1);
+      torunGroup.rotation.y = Math.PI / 3;
+      scene.add(torunGroup);
+
+      /* ==========================================================
+         6. CAMERA RIG & 3D BLENDER GIZMO (TRANSFORMCONTROLS)
+      ========================================================== */
+      const cameraRig = new THREE.Group();
+
+      // Premium Studio Camera Materials
+      const camBodyMat = new THREE.MeshStandardMaterial({
+        color: 0x2c3e50, // Sleek Satin Slate Blue Metal
+        roughness: 0.3,
+        metalness: 0.8
+      });
+      const camGoldMat = new THREE.MeshStandardMaterial({
+        color: 0xd4af37, // Champagne Gold Trim & Lens
+        roughness: 0.2,
+        metalness: 0.9
+      });
+      const tripodMetalMat = new THREE.MeshStandardMaterial({
+        color: 0xdbe4eb, // Brushed Titanium / Chrome Silver
+        roughness: 0.25,
+        metalness: 0.95
+      });
+      const tripodJointMat = new THREE.MeshStandardMaterial({
+        color: 0xd4af37, // Gold Anodized CNC Joints
+        roughness: 0.2,
+        metalness: 0.9
+      });
+
+      // Camera Body
+      const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 0.85), camBodyMat);
+      camBody.position.y = 0.22;
+      camBody.castShadow = true;
+      cameraRig.add(camBody);
+
+      // Camera Top Handle (Champagne Gold)
+      const camHandle = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.55), camGoldMat);
+      camHandle.position.set(0, 0.52, -0.05);
+      cameraRig.add(camHandle);
+
+      // Camera Lens Barrel (Gold Cine Lens)
+      const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.23, 0.55, 24), camGoldMat);
+      lens.rotation.x = Math.PI / 2;
+      lens.position.set(0, 0.22, -0.6);
+      lens.castShadow = true;
+      cameraRig.add(lens);
+
+      // Matte Box Sun Hood (Warm Graphite)
+      const hood = new THREE.Mesh(
+        new THREE.BoxGeometry(0.65, 0.52, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5, metalness: 0.6 })
+      );
+      hood.position.set(0, 0.22, -0.95);
+      cameraRig.add(hood);
+
+      // Side Operator Monitor Screen
+      const sideScreen = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.28, 0.38),
+        new THREE.MeshStandardMaterial({ color: 0x52c41a, emissive: 0x135200, roughness: 0.2 })
+      );
+      sideScreen.position.set(0.35, 0.26, 0.05);
+      cameraRig.add(sideScreen);
+
+      // Red Tally Recording Indicator
+      const tallyLight = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xff3b30, emissive: 0xff3b30 })
+      );
+      tallyLight.position.set(0, 0.46, -0.38);
+      cameraRig.add(tallyLight);
+
+      // 3D Professional 3-Legged Tripod Rig (Brushed Chrome & Gold)
+      const tripodGroup = new THREE.Group();
+      
+      // Central Column Hub
+      const centralHub = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.16, 0.3, 16), tripodJointMat);
+      centralHub.position.y = -0.15;
+      tripodGroup.add(centralHub);
+
+      // 3 Extendable Chrome Tripod Legs
+      for (let leg = 0; leg < 3; leg++) {
+        const legAngle = (leg / 3) * Math.PI * 2 + Math.PI / 6;
+        const legGroup = new THREE.Group();
+
+        // Upper leg section
+        const legUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.9, 12), tripodMetalMat);
+        legUpper.position.y = -0.45;
+        legGroup.add(legUpper);
+
+        // Gold Joint Ring
+        const legJoint = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.08, 12), tripodJointMat);
+        legJoint.position.y = -0.9;
+        legGroup.add(legJoint);
+
+        // Lower leg section
+        const legLower = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.8, 12), tripodMetalMat);
+        legLower.position.y = -1.3;
+        legGroup.add(legLower);
+
+        // Rubber Foot / Gold Tip
+        const legFoot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), tripodJointMat);
+        legFoot.position.y = -1.72;
+        legGroup.add(legFoot);
+
+        legGroup.position.set(Math.sin(legAngle) * 0.12, -0.15, Math.cos(legAngle) * 0.12);
+        legGroup.rotation.z = Math.cos(legAngle) * 0.28;
+        legGroup.rotation.x = -Math.sin(legAngle) * 0.28;
+        tripodGroup.add(legGroup);
+      }
+      cameraRig.add(tripodGroup);
+
+      // Elegant Holographic Ground Position Ring (Dual Emerald & Gold Ring)
+      const ringGroup = new THREE.Group();
+      const ringGeo = new THREE.RingGeometry(0.65, 0.82, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x52c41a, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = -1.75;
+      ringGroup.add(ringMesh);
+
+      const ringInnerGeo = new THREE.RingGeometry(0.2, 0.28, 24);
+      const ringInnerMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+      const ringInner = new THREE.Mesh(ringInnerGeo, ringInnerMat);
+      ringInner.rotation.x = -Math.PI / 2;
+      ringInner.position.y = -1.75;
+      ringGroup.add(ringInner);
+
+      cameraRig.add(ringGroup);
+
+      // Viewfinder Frustum Pyramid (Cone of View - 8 Meters Long)
+      const frustumGeo = new THREE.ConeGeometry(2.6, 8.0, 4, 1, true);
+      frustumGeo.rotateY(Math.PI / 4);
+      frustumGeo.rotateX(-Math.PI / 2);
+      frustumGeo.translate(0, 0.22, -4.0);
+
+      const frustumMat = new THREE.MeshBasicMaterial({
+        color: 0x52c41a,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.55
+      });
+      const frustumCone = new THREE.Mesh(frustumGeo, frustumMat);
+      cameraRig.add(frustumCone);
+
+      scene.add(cameraRig);
+
+      // 3D Blender Gizmo Aligned Handle (Ensures Red X and Blue Z arrows match camera forward & right)
+      const gizmoHandle = new THREE.Group();
+      scene.add(gizmoHandle);
+
+      // TransformControls (Blender 3D Gizmo)
+      const transformControls = new THREE.TransformControls(editorCamera, renderer.domElement);
+      transformControls.size = 0.85;
+      transformControls.setSpace('local');
+      transformControls.attach(gizmoHandle);
+      scene.add(transformControls);
+
+      let isCameraSelected = true;
+      let activeGizmoMode = 'translate'; // 'translate' or 'rotate'
+
+      function syncGizmoHandle() {
+        gizmoHandle.position.copy(cameraRig.position);
+        gizmoHandle.rotation.set(0, cameraRig.rotation.y + Math.PI, 0);
+      }
+
+      function setGizmoMode(mode) {
+        activeGizmoMode = mode;
+        transformControls.setMode(mode);
+        if (mode === 'rotate') {
+          transformControls.showX = false;
+          transformControls.showY = true;
+          transformControls.showZ = false;
+        } else {
+          transformControls.showX = true;
+          transformControls.showY = true;
+          transformControls.showZ = true;
+        }
+        document.getElementById('modeTranslateBtn').classList.toggle('active', mode === 'translate');
+        document.getElementById('modeRotateBtn').classList.toggle('active', mode === 'rotate');
+        document.getElementById('gTabTranslate').classList.toggle('active', mode === 'translate');
+        document.getElementById('gTabRotate').classList.toggle('active', mode === 'rotate');
+        toast(mode === 'translate' ? '✥ Taşıma Okları Aktif (G)' : '⟳ Döndürme Halkaları Aktif (R)');
+      }
+
+      function setCameraSelected(selected) {
+        isCameraSelected = selected;
+        transformControls.enabled = selected;
+        transformControls.visible = selected;
+        const gizmoPanel = document.getElementById('camGizmo');
+        if (selected) {
+          syncGizmoHandle();
+          gizmoPanel.classList.add('active');
+          camBody.material.emissive.setHex(0x1a3320);
+        } else {
+          gizmoPanel.classList.remove('active');
+          camBody.material.emissive.setHex(0x000000);
+        }
+      }
+
+      transformControls.addEventListener('dragging-changed', function (event) {
+        editorControls.enabled = !event.value;
+      });
+
+      transformControls.addEventListener('change', function () {
+        if (!isCameraSelected) return;
+
+        if (activeGizmoMode === 'translate') {
+          cameraRig.position.copy(gizmoHandle.position);
+          cameraHeight = Math.max(0.4, Math.min(12, cameraRig.position.y));
+          cameraRig.position.y = cameraHeight;
+          gizmoHandle.position.y = cameraHeight;
+        } else if (activeGizmoMode === 'rotate') {
+          cameraYaw = (gizmoHandle.rotation.y - Math.PI) * (180 / Math.PI);
+        }
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(false, true);
+      });
+
+      // Raycaster for selecting camera in God View
+      const raycaster = new THREE.Raycaster();
+      const mouseVec = new THREE.Vector2();
+
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        if (activeViewMode !== 'god') return;
+        mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouseVec, editorCamera);
+        const intersects = raycaster.intersectObjects([camBody, lens, tripodGroup, camHandle, hood], true);
+        if (intersects.length > 0) {
+          setCameraSelected(true);
+        }
+      });
+
+      /* ==========================================================
+         7. CAMERA TRANSFORM SYNC & PRESETS
+      ========================================================== */
+      let cameraYaw = -20;
+      let cameraPitch = -8;
+      let cameraHeight = 1.8;
+      let userHasModifiedCamera = false;
+
+      function updateShotCameraTransform(updateHandle = true, fromUser = true) {
+        if (fromUser) {
+          userHasModifiedCamera = true;
+        }
+
+        const radYaw = cameraYaw * (Math.PI / 180);
+        const radPitch = cameraPitch * (Math.PI / 180);
+
+        cameraRig.position.y = cameraHeight;
+        cameraRig.rotation.y = radYaw;
+        camBody.rotation.x = radPitch;
+        lens.rotation.x = Math.PI / 2 + radPitch;
+        frustumCone.rotation.x = -Math.PI / 2 + radPitch;
+
+        if (updateHandle) {
+          syncGizmoHandle();
+        }
+
+        shotCamera.position.copy(cameraRig.position);
+        shotCamera.position.y += 0.22;
+
+        const lookDir = new THREE.Vector3(
+          -Math.sin(radYaw) * Math.cos(radPitch),
+          Math.sin(radPitch),
+          -Math.cos(radYaw) * Math.cos(radPitch)
+        );
+
+        const lookTarget = shotCamera.position.clone().add(lookDir.multiplyScalar(10));
+        shotCamera.lookAt(lookTarget);
+        shotCamera.fov = cameraFov;
+        shotCamera.updateProjectionMatrix();
+
+        // Update UI values
+        const hVal = document.getElementById('camHeightVal');
+        const pVal = document.getElementById('camPitchVal');
+        const yVal = document.getElementById('camYawVal');
+        if (hVal) hVal.textContent = cameraRig.position.y.toFixed(1) + 'm';
+        if (pVal) pVal.textContent = Math.round(cameraPitch) + '°';
+        if (yVal) yVal.textContent = Math.round(cameraYaw) + '°';
+      }
+
+      /* ==========================================================
+         8. VIEW MODES (3D GOD VIEW vs DIRECTOR POV)
+      ========================================================== */
+      let activeViewMode = 'god';
+
+      function setViewMode(mode) {
+        activeViewMode = mode;
+        document.getElementById('tabGodView').classList.toggle('active', mode === 'god');
+        document.getElementById('tabDirectorPOV').classList.toggle('active', mode === 'director');
+
+        if (mode === 'director') {
+          transformControls.enabled = false;
+          transformControls.visible = false;
+          editorControls.enabled = false;
+          toast('🎬 Yönetmen Kadrajı (POV) Aktif');
+        } else {
+          editorControls.enabled = true;
+          transformControls.enabled = isCameraSelected;
+          transformControls.visible = isCameraSelected;
+          toast('🎥 3D Editör & Kamera Taşıma Modu');
+        }
+      }
+
+      document.getElementById('tabGodView').onclick = () => setViewMode('god');
+      document.getElementById('tabDirectorPOV').onclick = () => setViewMode('director');
+
+      /* ==========================================================
+         9. GIZMO HUD & STEPPERS & LENSES
+      ========================================================== */
+      document.getElementById('modeTranslateBtn').onclick = () => setGizmoMode('translate');
+      document.getElementById('modeRotateBtn').onclick = () => setGizmoMode('rotate');
+      document.getElementById('gTabTranslate').onclick = () => setGizmoMode('translate');
+      document.getElementById('gTabRotate').onclick = () => setGizmoMode('rotate');
+
+      document.getElementById('closeGizmoBtn').onclick = () => setCameraSelected(false);
+
+      document.getElementById('camHeightUp').onclick = () => {
+        cameraHeight = Math.min(10, +(cameraHeight + 0.3).toFixed(1));
+        cameraRig.position.y = cameraHeight;
+        gizmoHandle.position.y = cameraHeight;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+      };
+      document.getElementById('camHeightDown').onclick = () => {
+        cameraHeight = Math.max(0.4, +(cameraHeight - 0.3).toFixed(1));
+        cameraRig.position.y = cameraHeight;
+        gizmoHandle.position.y = cameraHeight;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+      };
+
+      document.getElementById('camPitchUp').onclick = () => {
+        cameraPitch = Math.min(30, cameraPitch + 3);
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+      };
+      document.getElementById('camPitchDown').onclick = () => {
+        cameraPitch = Math.max(-60, cameraPitch - 3);
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+      };
+
+      document.getElementById('camYawLeft').onclick = () => {
+        cameraYaw += 5;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+      };
+      document.getElementById('camYawRight').onclick = () => {
+        cameraYaw -= 5;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+      };
+
+      // Lens Selection
+      document.querySelectorAll('.g-lens-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.g-lens-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          cameraFov = parseFloat(btn.getAttribute('data-fov'));
+          userHasModifiedCamera = true;
+          updateShotCameraTransform(true, true);
+          toast(`Lens: ${btn.getAttribute('data-lens')} (FOV: ${cameraFov}°)`);
+        };
+      });
+
+      // Quick Angle Presets
+      document.getElementById('preLow').onclick = () => {
+        cameraHeight = 0.8;
+        cameraRig.position.y = cameraHeight;
+        gizmoHandle.position.y = cameraHeight;
+        cameraPitch = 12;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+        toast('Düşük Açı (Low Angle) uygulandı.');
+      };
+      document.getElementById('preEye').onclick = () => {
+        cameraHeight = 1.6;
+        cameraRig.position.y = cameraHeight;
+        gizmoHandle.position.y = cameraHeight;
+        cameraPitch = -4;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+        toast('Göz Hizası uygulandı.');
+      };
+      document.getElementById('preHigh').onclick = () => {
+        cameraHeight = 5.8;
+        cameraRig.position.y = cameraHeight;
+        gizmoHandle.position.y = cameraHeight;
+        cameraPitch = -32;
+        userHasModifiedCamera = true;
+        updateShotCameraTransform(true, true);
+        toast('Üst / Yüksek Açı uygulandı.');
+      };
+
+      /* ==========================================================
+         10. EVALUATION & 1/3 CALCULATION ENGINE (ROBUST VISIBILITY)
+      ========================================================== */
+      // SCENARIO ATTEMPT TRACKER STATE & PERSISTENCE
+      let scenarioAttempts = {};
+      try {
+        const savedAttempts = localStorage.getItem('sf_scenario_attempts');
+        if (savedAttempts) scenarioAttempts = JSON.parse(savedAttempts);
+      } catch (e) { }
+
+      function getScenarioAttemptData(idx) {
+        if (!scenarioAttempts[idx]) {
+          scenarioAttempts[idx] = { count: 0, autoSolved: false };
+        }
+        return scenarioAttempts[idx];
+      }
+
+      function saveAttemptData() {
+        try {
+          localStorage.setItem('sf_scenario_attempts', JSON.stringify(scenarioAttempts));
+        } catch (e) { }
+      }
+
+      let lastAttemptState = { x: null, y: null, z: null, yaw: null, pitch: null, fov: null };
+
+      function checkValidAttempt() {
+        const dist = (lastAttemptState.x !== null) ? Math.hypot(
+          cameraRig.position.x - lastAttemptState.x,
+          cameraRig.position.y - lastAttemptState.y,
+          cameraRig.position.z - lastAttemptState.z
+        ) : 999;
+        const yawDiff = (lastAttemptState.yaw !== null) ? Math.abs(cameraYaw - lastAttemptState.yaw) : 999;
+        const pitchDiff = (lastAttemptState.pitch !== null) ? Math.abs(cameraPitch - lastAttemptState.pitch) : 999;
+        const fovDiff = (lastAttemptState.fov !== null) ? Math.abs(cameraFov - lastAttemptState.fov) : 999;
+
+        // Herhangi bir fiziksel hareket, açı veya lens değişikliği yapıldı mı?
+        const hasDeltaMoved = (dist >= 0.04 || yawDiff >= 0.4 || pitchDiff >= 0.4 || fovDiff >= 0.4);
+        const hasMoved = userHasModifiedCamera || hasDeltaMoved;
+
+        if (!hasMoved) {
+          return { valid: false, reason: 'unmoved' };
+        }
+
+        // Geçerli deneme: Durumu kaydet ve etkileşim bayrağını sıfırla
+        userHasModifiedCamera = false;
+        lastAttemptState = {
+          x: cameraRig.position.x,
+          y: cameraRig.position.y,
+          z: cameraRig.position.z,
+          yaw: cameraYaw,
+          pitch: cameraPitch,
+          fov: cameraFov
+        };
+        return { valid: true };
+      }
+
+      function updateAttemptPipsUI() {
+        const data = getScenarioAttemptData(currentScenarioIndex);
+        const count = Math.min(10, data.count || 0);
+        const pips = document.querySelectorAll('#attemptPips .pip');
+        pips.forEach((p, i) => {
+          p.classList.toggle('filled', i < count);
+          p.classList.toggle('unlocked', count >= 10 || data.autoSolved);
+        });
+
+        const lbl = document.getElementById('attemptCountLabel');
+        const autoBtn = document.getElementById('autoSolveBtn');
+
+        if (count >= 10 || data.autoSolved) {
+          if (lbl) lbl.innerHTML = '<span style="color:#52c41a;font-weight:800">✨ Çözüm Kilidi Açık!</span>';
+          if (autoBtn) autoBtn.classList.add('show');
+        } else {
+          if (lbl) lbl.textContent = `${count}/10 Deneme`;
+          if (autoBtn) autoBtn.classList.remove('show');
+        }
+      }
+
+      function getScreenCoords(obj, cam, width, height) {
+        const p = new THREE.Vector3();
+        obj.getWorldPosition(p);
+        p.project(cam);
+
+        // p.z > 0 && p.z < 1 confirms object is in front of camera lens and not behind
+        const inFront = p.z > 0 && p.z < 1;
+        const inBoundsX = p.x >= -1.02 && p.x <= 1.02;
+        const inBoundsY = p.y >= -1.02 && p.y <= 1.02;
+        const isInFrame = inFront && inBoundsX && inBoundsY;
+
+        return {
+          x: (p.x * 0.5 + 0.5) * width,
+          y: (-p.y * 0.5 + 0.5) * height,
+          normX: p.x * 0.5 + 0.5,
+          normY: -p.y * 0.5 + 0.5,
+          inFront: inFront,
+          isInFrame: isInFrame,
+          visible: isInFrame
+        };
+      }
+
+      function updateMonitorThirdsHit() {
+        const mon = document.getElementById('monitor');
+        if (!mon) return;
+        const rect = mon.getBoundingClientRect();
+        const torunSc = getScreenCoords(torunGroup, shotCamera, rect.width, rect.height);
+        const saplingSc = getScreenCoords(saplingGroup, shotCamera, rect.width, rect.height);
+        const dedeSc = getScreenCoords(dedeGroup, shotCamera, rect.width, rect.height);
+
+        const thirdPoints = [
+          { id: 'mp1', x: 0.333, y: 0.333 },
+          { id: 'mp2', x: 0.666, y: 0.333 },
+          { id: 'mp3', x: 0.333, y: 0.666 },
+          { id: 'mp4', x: 0.666, y: 0.666 }
+        ];
+
+        thirdPoints.forEach(tp => {
+          const el = document.getElementById(tp.id);
+          if (!el) return;
+          const distTorun = torunSc.isInFrame ? Math.hypot(torunSc.normX - tp.x, torunSc.normY - tp.y) : 999;
+          const distSapling = saplingSc.isInFrame ? Math.hypot(saplingSc.normX - tp.x, saplingSc.normY - tp.y) : 999;
+          const distDede = dedeSc.isInFrame ? Math.hypot(dedeSc.normX - tp.x, dedeSc.normY - tp.y) : 999;
+          const isHit = (distTorun < 0.12 || distSapling < 0.12 || distDede < 0.12);
+          el.classList.toggle('hit', isHit);
+        });
+      }
+
+      function evaluateComposition() {
+        const mon = document.getElementById('monitor');
+        const rect = mon ? mon.getBoundingClientRect() : { width: 320, height: 195 };
+        const torunSc = getScreenCoords(torunGroup, shotCamera, rect.width, rect.height);
+        const dedeSc = getScreenCoords(dedeGroup, shotCamera, rect.width, rect.height);
+        const saplingSc = getScreenCoords(saplingGroup, shotCamera, rect.width, rect.height);
+
+        const attemptCheck = checkValidAttempt();
+
+        let totalScore = 0;
+        let focus = 0;
+        let flow = 0;
+        let tension = 0;
+        let space = 0;
+
+        let focusSub = '';
+        let flowSub = '';
+        let tensionSub = '';
+        let spaceSub = '';
+        let educationalHTML = '';
+
+        const anyCharInFrame = torunSc.isInFrame || dedeSc.isInFrame;
+        const bothCharsInFrame = torunSc.isInFrame && dedeSc.isInFrame;
+
+        // SCENARIOS EVALUATION (10 SABIR FİDANI MISSIONS)
+        if (currentScenarioIndex === 0) {
+          // 01 · Geniş Çekim & Boş Alan
+          if (!bothCharsInFrame) {
+            focus = Math.round(anyCharInFrame ? 30 : 10);
+            flow = 20;
+            space = 25;
+            tension = 15;
+            totalScore = Math.round(focus * 0.35 + space * 0.35 + flow * 0.20 + tension * 0.10);
+            focusSub = 'Karakterler Eksik ❌';
+            flowSub = 'Göz Akışı Yok';
+            tensionSub = 'Kadraj Boş';
+            spaceSub = 'Konu Belirsiz';
+            educationalHTML = `<strong>❌ Karakterler Vizörde Görünmüyor! (${totalScore}/100)</strong><br>
+            Dede ve Torun vizör çerçevesinin dışında kalmış. Geniş çekim için önce iki karakteri de vizöre almalısınız.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kameranın yönünü bahçenin ortasındaki Dede ve Torun'a çevirin (Yatay Pan: ~-22°). İkiliyi vizörün alt çizgisine oturtun.</div>`;
+          } else {
+            const lowerThirdAlign = Math.abs(torunSc.normY - 0.68) + Math.abs(dedeSc.normY - 0.68);
+            const isWideLens = cameraFov >= 50;
+            const isGoodHeight = cameraRig.position.y >= 2.4 && cameraRig.position.y <= 4.6;
+
+            focus = Math.round(Math.max(20, Math.min(100, 100 - lowerThirdAlign * 140)));
+            space = Math.round(isWideLens ? Math.min(100, (cameraFov - 30) * 2.4 + 25) : 40);
+            flow = Math.round(isGoodHeight ? 92 : (cameraRig.position.y < 2.0 ? 55 : 68));
+            tension = Math.round(focus * 0.5 + space * 0.5);
+            totalScore = Math.round(focus * 0.35 + space * 0.35 + flow * 0.20 + tension * 0.10);
+
+            focusSub = focus >= 75 ? 'Alt 1/3 Çizgisinde ✓' : 'Ortada / Yukarıda';
+            flowSub = isGoodHeight ? '3.4m Geniş Yükseklik ✓' : (cameraRig.position.y < 2.0 ? 'Kamera Çok Alçak' : 'Kamera Çok Yüksek');
+            tensionSub = 'Sabırlı Emek Hissi';
+            spaceSub = isWideLens ? 'Geniş Gökyüzü Payı ✓' : 'Lens Dar (50-85mm)';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Kusursuz Boş Alan & Geniş Çekim! (${totalScore}/100)</strong><br>
+              Dede ve torunu kadrajın alt üçte birine yerleştirerek gökyüzü ve bahçe boşluğunu (Negatif Alan) ustaca vurguladınız. Bu kompozisyon izleyiciye önlerindeki sabırlı emeğin büyüklüğünü hissettiriyor.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 1):</b> Boş alan (Negatif Alan), doğanın büyüklüğünü ve fidanın gelecekte dolduracağı umut alanını temsil eder.</div>`;
+            } else {
+              educationalHTML = `<strong>Geniş Çekim Geliştirilebilir (${totalScore}/100)</strong><br>
+              Karakterler kadrajın ortasında çok büyük kalmış veya lens dar. <b>35mm lens</b> seçip kamerayı <b>3.4m</b> yüksekliğe alarak karakterleri alt 1/3 bandına yerleştirin.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 1) {
+          // 02 · Orta Plan & Bakış Payı (Toprağı Kazmak)
+          if (!torunSc.isInFrame || !dedeSc.isInFrame) {
+            focus = 20; flow = 15; space = 20; tension = 15;
+            totalScore = 18;
+            focusSub = 'Karakter Kadraj Dışı ❌';
+            flowSub = 'Bakış Payı Yok';
+            tensionSub = 'Eylem Görünmüyor';
+            spaceSub = 'Nefes Payı Yok';
+            educationalHTML = `<strong>❌ Karakterler Vizörde Yok! (${totalScore}/100)</strong><br>
+            Torun veya Dede vizörde görünmüyor. Bakış payı oluşturmak için önce Torun'u ve baktığı Dede'yi aynı karede görmelisiniz.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı Torun'un arkasından Dede'ye doğru yönlendirin (Pan: ~-24°).</div>`;
+          } else {
+            const torunOnLeft = torunSc.normX <= 0.45 && torunSc.normX >= 0.18;
+            const leadSpace = Math.max(0, Math.min(100, (dedeSc.normX - torunSc.normX) * 190));
+            focus = Math.round(torunOnLeft ? Math.max(40, 100 - Math.abs(torunSc.normX - 0.333) * 200) : 35);
+            space = Math.round(leadSpace);
+            flow = Math.round(torunOnLeft && leadSpace > 40 ? 94 : 45);
+            tension = Math.round(focus * 0.5 + space * 0.5);
+            totalScore = Math.round(focus * 0.35 + space * 0.35 + flow * 0.15 + tension * 0.15);
+
+            focusSub = torunOnLeft ? 'Torun Sol 1/3\'te ✓' : 'Torun Ortada/Sağda';
+            flowSub = leadSpace > 40 ? 'Sağ Eylem Alanı Açık ✓' : 'Bakış Yönü Tıkalı';
+            tensionSub = 'Merak & Beklenti';
+            spaceSub = `${Math.round(leadSpace)}% Nefes Alanı`;
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Harika Bakış Payı (Lead Room)! (${totalScore}/100)</strong><br>
+              Torun sol 1/3 çizgisine yerleşmiş ve baktığı sağ yönde geniş bir eylem payı bırakılmış. İzleyicinin merakı doğrudan dedenin kazdığı toprağa yöneliyor.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi:</b> Karakterin merakla baktığı yönde boşluk bırakmak bakış yönünü ve merak duygusunu kuvvetlendirir.</div>`;
+            } else {
+              educationalHTML = `<strong>Bakış Payı Yetersiz (${totalScore}/100)</strong><br>
+              Torun kadrajın sağında veya ortasında kalmış, baktığı yönde yeterli boşluk yok. Torun'u sol 1/3 güç çizgisine (<span style="color:#52c41a">mp3</span>) oturtun.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 2) {
+          // 03 · İkili Denge & Orta Çekim (Fidanı Tutmak)
+          if (!bothCharsInFrame || !saplingSc.isInFrame) {
+            focus = 20; flow = 20; space = 20; tension = 20; totalScore = 20;
+            focusSub = 'Kadro Eksik ❌'; flowSub = 'Denge Kurulamadı'; tensionSub = 'Konu Yok'; spaceSub = 'Boşluksuz';
+            educationalHTML = `<strong>❌ Karakterler veya Fidan Kadrajda Değil! (${totalScore}/100)</strong><br>
+            İkili denge için Torun, Dede ve ortadaki Fidanın üçünün de vizörde görünmesi gerekir.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı bahçenin tam karşısına (X: 0, Z: 5.2m) alıp karşıdan bakın.</div>`;
+          } else {
+            const balanceDiff = Math.abs((torunSc.normX - 0.28) - (0.72 - dedeSc.normX));
+            const saplingCenter = Math.abs(saplingSc.normX - 0.50);
+            focus = Math.round(Math.max(25, 100 - saplingCenter * 260));
+            flow = Math.round(Math.max(25, 100 - balanceDiff * 220));
+            space = Math.round(Math.min(100, (1 - balanceDiff) * 80 + 20));
+            tension = Math.round(focus * 0.5 + flow * 0.5);
+            totalScore = Math.round(focus * 0.35 + flow * 0.35 + space * 0.15 + tension * 0.15);
+
+            focusSub = saplingCenter < 0.12 ? 'Fidan Tam Merkezde ✓' : 'Fidan Kayık';
+            flowSub = balanceDiff < 0.15 ? 'Sol/Sağ Eşit Ağırlık ✓' : 'Dengesiz Dağılım';
+            tensionSub = 'Ortak Emek Bağı';
+            spaceSub = 'İkili Çerçeve';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Kusursuz Denge & Orta Çekim! (${totalScore}/100)</strong><br>
+              Dede ve torun kadrajın iki yanında eşit dengede dururken fidan tam ortada bağlayıcı öğe olarak konumlandırıldı. Bilginin ve sevginin paylaşıldığı harika bir ikili kompozisyon.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 2):</b> Denge kompozisyonu, iki karakter arasındaki eşit bağı ve ortak amacı simgeler.</div>`;
+            } else {
+              educationalHTML = `<strong>Karakter Dengesi Eşit Değil (${totalScore}/100)</strong><br>
+              İki karakter kadrajda eşit mesafede değil veya fidan ortada değil. Kamerayı ikiliye tam karşıdan hizalayın.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 3) {
+          // 04 · Üçte Bir & Detay (Toprağı Bastırmak)
+          if (!saplingSc.isInFrame) {
+            focus = 15; flow = 15; space = 20; tension = 15; totalScore = 16;
+            focusSub = 'Fidan Kadraj Dışı ❌'; flowSub = 'Odak Yok'; tensionSub = 'Detay Yok'; spaceSub = 'Hizalanmadı';
+            educationalHTML = `<strong>❌ Fidan ve Eller Görünmüyor! (${totalScore}/100)</strong><br>
+            Bu sahnede fidan ve dedenin toprağı bastıran elleri ana odak noktasıdır.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı 1.3m yüksekliğe indirip fidana yaklaşın.</div>`;
+          } else {
+            const saplingLowerLeft = Math.hypot(saplingSc.normX - 0.333, saplingSc.normY - 0.666);
+            focus = Math.round(Math.max(25, 100 - saplingLowerLeft * 220));
+            flow = Math.round(torunSc.isInFrame ? Math.min(100, 100 - Math.abs(torunSc.normX - 0.666) * 180) : 40);
+            space = Math.round(Math.min(100, (1 - saplingLowerLeft) * 85));
+            tension = Math.round(focus * 0.5 + flow * 0.5);
+            totalScore = Math.round(focus * 0.40 + flow * 0.30 + space * 0.15 + tension * 0.15);
+
+            focusSub = saplingLowerLeft < 0.14 ? 'Sol Alt 1/3 (mp3) ✓' : 'Kesişimden Uzak';
+            flowSub = torunSc.isInFrame && torunSc.normX > 0.5 ? 'Torun Sağ Üstte ✓' : 'Torun Hizası Zayıf';
+            tensionSub = 'Şefkat ve Odak';
+            spaceSub = 'Çapraz Denge';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Harika 1/3 Kuralı & Odaklanma! (${totalScore}/100)</strong><br>
+              Dedenin toprağı bastıran elleri ve fidan sol alt 1/3 güç noktasına, torun ise sağ üste yerleştirildi. Göz doğrudan sahnenin asıl konusuna akıyor.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 3):</b> Üçte bir kuralı izleyicinin dikkatini dağıtmadan sahnenin kalbine odaklar.</div>`;
+            } else {
+              educationalHTML = `<strong>1/3 Hizalaması Geliştirilebilir (${totalScore}/100)</strong><br>
+              Fidanı vizörün sol alt kesişim noktasına (<span style="color:#52c41a">mp3</span>), torunu sağ üste getirecek şekilde açıyı ayarlayın.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 4) {
+          // 05 · Ritim 1: Santral & Yakın Detay (Sabır Toprağı)
+          if (!saplingSc.isInFrame) {
+            focus = 15; flow = 15; space = 20; tension = 15; totalScore = 16;
+            focusSub = 'Fidan Yok ❌'; flowSub = 'Merkez Boş'; tensionSub = 'Uzak Çekim'; spaceSub = 'Konu Dışı';
+            educationalHTML = `<strong>❌ Toprak ve Fidan Kadrajda Yok! (${totalScore}/100)</strong><br>
+            Ritim 1 yakın detay çekimidir; fidan kadrajın merkezinde olmalıdır.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı fidanın 2 metre önüne çekip 1.1m yüksekliğe ayarlayın.</div>`;
+          } else {
+            const centerDist = Math.hypot(saplingSc.normX - 0.50, saplingSc.normY - 0.50);
+            const distCam = shotCamera.position.distanceTo(saplingGroup.position);
+            const isClose = distCam < 4.2;
+
+            focus = Math.round(Math.max(25, 100 - centerDist * 320));
+            tension = Math.round(isClose ? Math.max(40, 100 - (distCam - 2.0) * 25) : 35);
+            flow = Math.round(Math.min(100, 100 - centerDist * 160));
+            space = Math.round(Math.min(100, 100 - Math.abs(cameraFov - 50) * 2.2));
+            totalScore = Math.round(focus * 0.40 + tension * 0.30 + flow * 0.20 + space * 0.10);
+
+            focusSub = centerDist < 0.10 ? 'Tam Merkezde (+) ✓' : 'Merkezden Kayık';
+            flowSub = 'Simetrik Detay';
+            tensionSub = isClose ? 'Yakın Plan (Close-up) ✓' : 'Mesafe Çok Uzak';
+            spaceSub = '50mm Standart Lens';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Usta İşi Santral Yakın Detay! (${totalScore}/100)</strong><br>
+              Fidanı ve toprağı kadrajın tam merkezine oturtarak sabrın ve toprağın dokusunu öne çıkardınız. Ritim tekniğinin 1. adımı (detay) başarıyla kuruldu.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 4 - Ritim Beat 1):</b> Santral yakın çekim, izleyicinin tüm dikkatini küçük ama anlamı büyük bir eyleme kilitler.</div>`;
+            } else {
+              educationalHTML = `<strong>Merkezleme veya Yakınlık Yetersiz (${totalScore}/100)</strong><br>
+              Kamerayı fidanın 2-3 metre önüne kadar yaklaştırın ve fidanı vizörün tam merkezindeki artı (+) çizgisine kilitleyin.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 5) {
+          // 06 · Ritim 2: Yakın Plan & Tepki (Meraklı Bekleyiş)
+          if (!torunSc.isInFrame) {
+            focus = 15; flow = 15; space = 20; tension = 15; totalScore = 16;
+            focusSub = 'Torun Görünmüyor ❌'; flowSub = 'Tepki Yok'; tensionSub = 'Duygu Yok'; spaceSub = 'Boşluksuz';
+            educationalHTML = `<strong>❌ Torun Vizörde Görünmüyor! (${totalScore}/100)</strong><br>
+            Bu görev bir tepki planıdır (Reaction Shot); Torun'un yüz ifadesi ana odak olmalıdır.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı Torun'un yüz hizasına yaklaştırın (Yükseklik: 1.4m, Pan: +24°).</div>`;
+          } else {
+            const torunUpperRight = Math.hypot(torunSc.normX - 0.666, torunSc.normY - 0.333);
+            focus = Math.round(Math.max(25, 100 - torunUpperRight * 230));
+            space = Math.round(Math.min(100, torunSc.normX * 130));
+            flow = Math.round(Math.min(100, (1 - torunUpperRight) * 80 + 20));
+            tension = Math.round(focus * 0.5 + space * 0.5);
+            totalScore = Math.round(focus * 0.40 + space * 0.30 + flow * 0.20 + tension * 0.10);
+
+            focusSub = torunUpperRight < 0.15 ? 'Sağ Üst 1/3 (mp2) ✓' : 'Kesişimden Uzak';
+            flowSub = 'İçsel Düşünce';
+            tensionSub = 'Tepki & Bekleyiş';
+            spaceSub = 'Sol Düşünce Alanı ✓';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Etkileyici Tepki & Bekleyiş Kadrajı! (${totalScore}/100)</strong><br>
+              Torunun meraklı yüzü sağ üst 1/3 noktasına yerleşti, sol taraftaki boşluk ise çocuğun zihnindeki sabır ve düşünce alanını yarattı.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 5 - Ritim Beat 2):</b> Eylemden hemen sonra gelen tepki planı, izleyiciyi karakterin duygusuna ortak eder.</div>`;
+            } else {
+              educationalHTML = `<strong>Torunun Konumu Hizalanamadı (${totalScore}/100)</strong><br>
+              Torun'u vizörün sağ üst kesişim noktasına (<span style="color:#52c41a">mp2</span>) hizalayın ve sol tarafında düşünce boşluğu bırakın.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 6) {
+          // 07 · Ritim 3: Denge & Sessiz Öğüt (Göz Hizası)
+          if (!bothCharsInFrame) {
+            focus = 15; flow = 15; space = 20; tension = 15; totalScore = 16;
+            focusSub = 'İkili Eksik ❌'; flowSub = 'Bağ Yok'; tensionSub = 'Açı Bozuk'; spaceSub = 'Kadraj Dışı';
+            educationalHTML = `<strong>❌ İki Karakter de Kadrajda Olmalı! (${totalScore}/100)</strong><br>
+            Sessiz öğüt sahnesi için Dede ve Torun karşılıklı aynı karede görünmelidir.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı 1.2m göz hizasına indirip ikiliyi kadraja alın.</div>`;
+          } else {
+            const eyeLevel = Math.abs(cameraRig.position.y - 1.2) < 0.4;
+            const balance = Math.abs(torunSc.normX - (1 - dedeSc.normX)) < 0.22;
+            focus = Math.round(eyeLevel ? 92 : Math.max(30, 100 - Math.abs(cameraRig.position.y - 1.2) * 80));
+            flow = Math.round(balance ? 90 : 48);
+            space = Math.round(Math.min(100, bothCharsInFrame ? 85 : 30));
+            tension = Math.round(focus * 0.5 + flow * 0.5);
+            totalScore = Math.round(focus * 0.35 + flow * 0.35 + space * 0.15 + tension * 0.15);
+
+            focusSub = eyeLevel ? '1.2m Göz Hizası (Eye-Level) ✓' : (cameraRig.position.y > 1.6 ? 'Kamera Yüksek' : 'Kamera Alçak');
+            flowSub = balance ? 'Karşılıklı Eşit Denge ✓' : 'Orantısız Kadraj';
+            tensionSub = 'Sessiz Sevgi Bağı';
+            spaceSub = 'Samimi İkili Plan';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Sıcak ve Samimi Öğüt Anı! (${totalScore}/100)</strong><br>
+              Diz çökmüş iki karakteri göz hizasında (Eye-Level) ve dengeli bir simetriyle çerçevelediniz. Diyalogsuz, saf bir sevgi ve sabır öğretisi yansıyor.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 6 - Ritim Beat 3 Payoff):</b> Göz hizası iki nesil arasında saygı, samimiyet ve eşitlik köprüsü kurar.</div>`;
+            } else {
+              educationalHTML = `<strong>Kamera Göz Hizasına Alınmalı (${totalScore}/100)</strong><br>
+              Kamerayı tam 1.2m yüksekliğe (göz hizası) indirin ve dede ile torunu karşılıklı eşit dengede kadraja alın.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 7) {
+          // 08 · Hareket & Göz Akışı (Sulama)
+          if (!bothCharsInFrame || !saplingSc.isInFrame) {
+            focus = 15; flow = 15; space = 20; tension = 15; totalScore = 16;
+            focusSub = 'Öğeler Eksik ❌'; flowSub = 'Akış Çizgisi Yok'; tensionSub = 'Eylem Görünmüyor'; spaceSub = 'Konu Dışı';
+            educationalHTML = `<strong>❌ Sulama Eylemi Kadrajda Değil! (${totalScore}/100)</strong><br>
+            Dede, sulama kabı, fidan ve torun aynı karede akış halinde görünmelidir.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı 1.7m yüksekliğe alıp hafif çapraz açıya (Pan: -18°) getirin.</div>`;
+          } else {
+            const hasGoodAngle = Math.abs(cameraYaw - -18) < 15;
+            focus = Math.round(Math.max(25, 100 - Math.abs(saplingSc.normX - 0.45) * 180));
+            flow = Math.round(hasGoodAngle ? 94 : Math.max(30, 100 - Math.abs(cameraYaw - -18) * 4));
+            tension = Math.round(Math.min(100, bothCharsInFrame ? 88 : 40));
+            space = Math.round(Math.min(100, cameraFov * 1.3));
+            totalScore = Math.round(flow * 0.40 + focus * 0.30 + tension * 0.15 + space * 0.15);
+
+            focusSub = 'Fidan & Su Odağı';
+            flowSub = hasGoodAngle ? 'Dede ➔ Fidan ➔ Torun Akışı ✓' : 'Çapraz Açı Yetersiz';
+            tensionSub = 'Can Suyu Hareketi';
+            spaceSub = 'Dinamik Eylem Alanı';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Akıcı Göz Akışı ve Dinamik Hareket! (${totalScore}/100)</strong><br>
+              Sulama kabından fidana ve oradan toruna uzanan göz akışı çizgisi sahneye hayat ve canlılık kattı. İki karakter arasındaki uyum zirveye ulaştı.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 7):</b> Hareket dili ve suyun akışı gözü karakterler arasında köprü gibi gezdirir.</div>`;
+            } else {
+              educationalHTML = `<strong>Açı Akışı Yetersiz (${totalScore}/100)</strong><br>
+              Dede, sulama kabı, fidan ve torunun aynı görsel çizgi üzerinde akmasını sağlayacak çapraz bir açı belirleyin.`;
+            }
+          }
+
+        } else if (currentScenarioIndex === 8) {
+          // 09 · Omuz Üstü (OTS) & Derinlik
+          const distCamToDede = shotCamera.position.distanceTo(dedeGroup.position);
+          const isOTS = distCamToDede < 3.8 && dedeSc.isInFrame;
+
+          if (!torunSc.isInFrame || !isOTS) {
+            focus = 20; flow = 15; space = 20; tension = 15; totalScore = 18;
+            focusSub = 'OTS Konumu Yanlış ❌'; flowSub = 'Derinlik Yok'; tensionSub = 'Omuz Fluluğu Yok'; spaceSub = 'Uzak Kamera';
+            educationalHTML = `<strong>❌ Omuz Üstü Konumu Yakalanamadı! (${totalScore}/100)</strong><br>
+            OTS (Over-The-Shoulder) çekim için kamera Dede'nin hemen arkasında omuz hizasında olmalı ve Torun'a bakmalıdır.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı Dede'nin arkasına taşıyın (X: 1.8, Y: 1.35, Z: 2.2m).</div>`;
+          } else {
+            focus = Math.round(isOTS ? 94 : 45);
+            flow = Math.round(torunSc.isInFrame && saplingSc.isInFrame ? 92 : 40);
+            space = Math.round(Math.min(100, (1 - torunSc.normX) * 120));
+            tension = Math.round(focus * 0.5 + flow * 0.5);
+            totalScore = Math.round(focus * 0.40 + flow * 0.30 + space * 0.15 + tension * 0.15);
+
+            focusSub = isOTS ? 'Dede Omzu Ön Planda ✓' : 'Mesafe Çok Uzak';
+            flowSub = 'Derinlik Katmanı (3D)';
+            tensionSub = 'Dedenin Şefkatli Bakışı';
+            spaceSub = 'Ön/Arka Plan Ayrımı';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>✓ Başarılı Omuz Üstü (OTS) Derinliği! (${totalScore}/100)</strong><br>
+              Dedenin omzu ön planda flulaşırken torunun fidana olan şefkati derinlikli bir sinematografiyle aktarıldı.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi:</b> OTS çekim izleyiciyi dedenin şefkatli bakış açısına davet eder.</div>`;
+            } else {
+              educationalHTML = `<strong>Kamera Dedenin Omzuna Yakın Değil (${totalScore}/100)</strong><br>
+              OTS kadrajı için kamerayı dedenin hemen 1-2 metre arkasına taşıyıp omzu üzerinden fidana ve toruna odaklanın.`;
+            }
+          }
+
+        } else {
+          // 10 · Gün Batımı Kuş Bakışı (Sabır Meyvesi / Master)
+          const isHigh = cameraRig.position.y >= 5.5;
+          const isTiltDown = cameraPitch <= -22;
+
+          if (!bothCharsInFrame || !isHigh || !isTiltDown) {
+            focus = 25; flow = 20; space = 30; tension = 20; totalScore = 24;
+            focusSub = isHigh ? 'Açı Aşağı Eğik Değil' : 'Kamera Yeterince Yüksek Değil ❌';
+            flowSub = 'Master Kadraj Yok';
+            tensionSub = 'Tepeden Bakış Eksik';
+            spaceSub = 'Geniş Alan Eksik';
+            educationalHTML = `<strong>❌ Kuş Bakışı Yüksekliği veya Eğimi Yetersiz! (${totalScore}/100)</strong><br>
+            Master kuş bakışı için kamera tepede (7.5m) olmalı ve -35° aşağıya bakmalıdır.
+            <div class="fb-tip">🎯 <b>Nasıl Düzeltilir?</b> Kamerayı 7.5m yüksekliğe çıkarın ve Dikey Eğim (Tilt) açısını -35° yapın.</div>`;
+          } else {
+            focus = Math.round(Math.min(100, bothCharsInFrame ? 92 : 40));
+            tension = Math.round(isHigh ? 96 : 45);
+            flow = Math.round(isTiltDown ? 94 : 40);
+            space = Math.round(Math.min(100, cameraFov * 1.35));
+            totalScore = Math.round(tension * 0.35 + flow * 0.35 + focus * 0.15 + space * 0.15);
+
+            focusSub = 'Tüm Bahçe & Karakterler ✓';
+            flowSub = isTiltDown ? '-35° Aşağı Eğimli Kuş Bakışı ✓' : 'Açı Düz';
+            tensionSub = isHigh ? '7.5m Master Yükseklik ✓' : 'Alçak';
+            spaceSub = 'Geniş Gün Batımı Atmosferi';
+
+            if (totalScore >= 70) {
+              educationalHTML = `<strong>🏆 Usta İşi Gün Batımı Kuş Bakışı (Master Shot)! (${totalScore}/100)</strong><br>
+              Tüm bahçeyi, batan güneşi ve fidanın yanında huzurla oturan dede-torun ikilisini kapsayan masalsı bir kapanış kadrajı yakaladınız.
+              <div class="fb-tip">💡 <b>Storyboard Öğretisi (Panel 8 & 9 Final):</b> Kuş bakışı ve geniş alan, sabırla dikilen fidanın büyüyeceği huzurlu geleceği özetler.</div>`;
+            } else {
+              educationalHTML = `<strong>Kamera Yeterince Yüksekte Değil (${totalScore}/100)</strong><br>
+              Master kuş bakışı için kamerayı 6.5m - 8.5m yüksekliğe çıkarıp -35° aşağıya eğin.`;
+            }
+          }
+        }
+
+        // Update popup metric values & sub-descriptions
+        document.getElementById('fbScore').textContent = totalScore + ' / 100';
+        document.getElementById('fbFocus').textContent = focus + '%';
+        document.getElementById('fbTension').textContent = tension + '%';
+        document.getElementById('fbFlow').textContent = flow + '%';
+        document.getElementById('fbSpace').textContent = space + '%';
+
+        const subF = document.getElementById('fbFocusSub');
+        const subFl = document.getElementById('fbFlowSub');
+        const subT = document.getElementById('fbTensionSub');
+        const subS = document.getElementById('fbSpaceSub');
+        if (subF) subF.textContent = focusSub;
+        if (subFl) subFl.textContent = flowSub;
+        if (subT) subT.textContent = tensionSub;
+        if (subS) subS.textContent = spaceSub;
+
+        // Card styling by score
+        const setCardStatus = (cardId, score) => {
+          const card = document.getElementById(cardId);
+          if (!card) return;
+          card.classList.remove('good', 'warn', 'bad');
+          if (score >= 70) card.classList.add('good');
+          else if (score >= 45) card.classList.add('warn');
+          else card.classList.add('bad');
+        };
+
+        setCardStatus('cardFocus', focus);
+        setCardStatus('cardFlow', flow);
+        setCardStatus('cardTension', tension);
+        setCardStatus('cardSpace', space);
+
+        // ATTEMPT TRACKER INCREMENT & AUTO-SOLVE UNLOCK
+        const attData = getScenarioAttemptData(currentScenarioIndex);
+        if (attemptCheck.valid && totalScore < 70) {
+          attData.count = (attData.count || 0) + 1;
+          saveAttemptData();
+          updateAttemptPipsUI();
+
+          if (attData.count >= 10) {
+            toast('✨ 10 nitelikli deneme tamamlandı! Dilerseniz "Yönetmen Çözümünü Göster & Uygula" butonuna basarak ideal kadrajı öğrenebilirsiniz.');
+          }
+        } else if (!attemptCheck.valid) {
+          if (attemptCheck.reason === 'unmoved' || attemptCheck.reason === 'first_unmoved') {
+            toast('⚠️ Deneme sayacının ilerlemesi için kamerayı hareket ettirmeli veya açısını değiştirmelisiniz!');
+          } else if (attemptCheck.reason === 'too_fast') {
+            toast('⚠️ Lütfen kamerayı ayarlayıp kadrajı dikkatlice inceleyin.');
+          }
+        }
+
+        // PROGRESSIVE UNLOCK
+        let unlockedNew = false;
+        let nextScenarioIndex = -1;
+        if (totalScore >= 70) {
+          passedScenarios.add(currentScenarioIndex);
+          if (currentScenarioIndex + 1 < SCENARIOS.length) {
+            if (!unlockedScenarios.has(currentScenarioIndex + 1)) {
+              unlockedScenarios.add(currentScenarioIndex + 1);
+              unlockedNew = true;
+              nextScenarioIndex = currentScenarioIndex + 1;
+            }
+          }
+          saveProgress();
+          renderScenarioGrid();
+          updateAttemptPipsUI();
+        }
+
+        if (unlockedNew && nextScenarioIndex !== -1) {
+          const nextSc = SCENARIOS[nextScenarioIndex];
+          educationalHTML += `
+            <div class="sc-unlock-banner">
+              <div class="sc-unlock-text">
+                🎉 <b>Tebrikler! Yeni Görevin Kilidi Açıldı:</b><br>
+                ${nextSc.num} · ${nextSc.title}
+              </div>
+              <button class="sc-unlock-btn" id="nextUnlockBtn">Sonraki Göreve Başla ▶</button>
+            </div>
+          `;
+        }
+
+        document.getElementById('fbEducationalBody').innerHTML = educationalHTML;
+        const fbPopup = document.getElementById('feedbackPopup');
+        const scPanel = document.getElementById('scenarioPanel');
+        if (fbPopup && scPanel) {
+          fbPopup.style.bottom = (scPanel.offsetHeight + 28) + 'px';
+        }
+        fbPopup.classList.add('show');
+
+        const nextUnlockBtn = document.getElementById('nextUnlockBtn');
+        if (nextUnlockBtn) {
+          nextUnlockBtn.onclick = () => {
+            document.getElementById('feedbackPopup').classList.remove('show');
+            loadScenario(nextScenarioIndex);
+          };
+        }
+
+        if (unlockedNew) {
+          toast(`🎉 Tebrikler! Görev 0${nextScenarioIndex + 1} kilidi açıldı!`);
+        } else if (attemptCheck.valid) {
+          toast(`Kadraj değerlendirildi (${totalScore}/100).`);
+        }
+
+        return totalScore;
+      }
+
+      /* ==========================================================
+         CINEMATIC AUTO-SOLVE & MASTERCLASS ENGINE
+      ========================================================== */
+      let isAutoSolving = false;
+      function autoSolveCurrentScenario() {
+        if (isAutoSolving) return;
+        const sc = SCENARIOS[currentScenarioIndex];
+        const data = getScenarioAttemptData(currentScenarioIndex);
+        data.autoSolved = true;
+        saveAttemptData();
+
+        isAutoSolving = true;
+        flashShutter();
+        toast('✨ Yönetmen Çözümü Uygulanıyor...');
+
+        // Smooth tween transition to ideal camera angle
+        const startPos = cameraRig.position.clone();
+        const startYaw = cameraYaw;
+        const startPitch = cameraPitch;
+        const startHeight = cameraHeight;
+        const startFov = cameraFov;
+
+        const targetPos = new THREE.Vector3(sc.camPos.x, sc.camPos.y, sc.camPos.z);
+        const targetYaw = sc.camPos.yaw;
+        const targetPitch = sc.camPos.pitch;
+        const targetHeight = sc.camPos.y;
+        const targetFov = sc.camPos.fov;
+
+        const duration = 1200; // 1.2s smooth tween
+        const startTime = performance.now();
+
+        function easeInOutCubic(x) {
+          return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+        }
+
+        function tweenStep(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          const ease = easeInOutCubic(progress);
+
+          cameraRig.position.lerpVectors(startPos, targetPos, ease);
+          cameraHeight = startHeight + (targetHeight - startHeight) * ease;
+          cameraRig.position.y = cameraHeight;
+          gizmoHandle.position.y = cameraHeight;
+
+          cameraYaw = startYaw + (targetYaw - startYaw) * ease;
+          cameraPitch = startPitch + (targetPitch - startPitch) * ease;
+          cameraFov = startFov + (targetFov - startFov) * ease;
+
+          // Update active lens button
+          document.querySelectorAll('.g-lens-btn').forEach(btn => {
+            const btnFov = parseFloat(btn.getAttribute('data-fov'));
+            btn.classList.toggle('active', Math.abs(btnFov - cameraFov) < 4);
+          });
+
+          updateShotCameraTransform(true, false);
+
+          if (progress < 1) {
+            requestAnimationFrame(tweenStep);
+          } else {
+            isAutoSolving = false;
+            // Mark scenario as passed
+            passedScenarios.add(currentScenarioIndex);
+            if (currentScenarioIndex + 1 < SCENARIOS.length) {
+              unlockedScenarios.add(currentScenarioIndex + 1);
+            }
+            saveProgress();
+            renderScenarioGrid();
+            updateAttemptPipsUI();
+
+            // Show Director's Masterclass Explanation
+            showAutoSolveMasterclass(sc);
+          }
+        }
+        requestAnimationFrame(tweenStep);
+      }
+
+      function showAutoSolveMasterclass(sc) {
+        document.getElementById('fbScore').innerHTML = '100 / 100 <span style="font-size:11px;color:#52c41a;font-weight:700">(Yönetmen Desteğiyle Öğrenildi 🎓)</span>';
+        document.getElementById('fbFocus').textContent = '100%';
+        document.getElementById('fbTension').textContent = '100%';
+        document.getElementById('fbFlow').textContent = '100%';
+        document.getElementById('fbSpace').textContent = '100%';
+
+        const setCardStatus = (cardId) => {
+          const card = document.getElementById(cardId);
+          if (card) { card.className = 'fb-metric-card good'; }
+        };
+        setCardStatus('cardFocus');
+        setCardStatus('cardFlow');
+        setCardStatus('cardTension');
+        setCardStatus('cardSpace');
+
+        const subF = document.getElementById('fbFocusSub');
+        const subFl = document.getElementById('fbFlowSub');
+        const subT = document.getElementById('fbTensionSub');
+        const subS = document.getElementById('fbSpaceSub');
+        if (subF) subF.textContent = 'İdeal Altın Kesişim ✓';
+        if (subFl) subFl.textContent = 'Kusursuz Görsel Akış ✓';
+        if (subT) subT.textContent = 'Dramatik Duygu Bağı ✓';
+        if (subS) subS.textContent = 'Dengeli Atmosfer ✓';
+
+        let nextScenarioIndex = currentScenarioIndex + 1 < SCENARIOS.length ? currentScenarioIndex + 1 : -1;
+        let masterclassHTML = `
+          <div style="background:rgba(82,196,26,0.1);border:1px solid var(--leaf);padding:12px;border-radius:10px;margin-bottom:12px">
+            <strong style="color:var(--leaf);font-size:13px">🎓 Yönetmen Çözüm Analizi: Neden Bu Açı ve Lens Seçildi?</strong>
+            <div style="margin-top:6px;color:#eaf5ee;font-size:11.5px;line-height:1.5">
+              ${sc.hint}
+            </div>
+          </div>
+        `;
+
+        if (nextScenarioIndex !== -1) {
+          const nextSc = SCENARIOS[nextScenarioIndex];
+          masterclassHTML += `
+            <div class="sc-unlock-banner">
+              <div class="sc-unlock-text">
+                🎉 <b>Tebrikler! Sonraki Görevin Kilidi Açıldı:</b><br>
+                ${nextSc.num} · ${nextSc.title}
+              </div>
+              <button class="sc-unlock-btn" id="nextUnlockBtn">Sonraki Göreve Başla ▶</button>
+            </div>
+          `;
+        }
+
+        document.getElementById('fbEducationalBody').innerHTML = masterclassHTML;
+        const fbPopup = document.getElementById('feedbackPopup');
+        const scPanel = document.getElementById('scenarioPanel');
+        if (fbPopup && scPanel) {
+          fbPopup.style.bottom = (scPanel.offsetHeight + 28) + 'px';
+        }
+        fbPopup.classList.add('show');
+
+        const nextUnlockBtn = document.getElementById('nextUnlockBtn');
+        if (nextUnlockBtn) {
+          nextUnlockBtn.onclick = () => {
+            document.getElementById('feedbackPopup').classList.remove('show');
+            loadScenario(nextScenarioIndex);
+          };
+        }
+      }
+
+      /* ==========================================================
+         11. DYNAMIC OVERLAYS
+      ========================================================== */
+      let eyeOn = false;
+      let lineOn = false;
+
+      function updateOverlays() {
+        const overlay = document.getElementById('analysisOverlay');
+        if (!eyeOn && !lineOn) {
+          overlay.classList.remove('show');
+          return;
+        }
+        overlay.classList.add('show');
+
+        const activeCam = activeViewMode === 'director' ? shotCamera : editorCamera;
+
+        function toScreen(vec) {
+          const p = vec.clone().project(activeCam);
+          return {
+            x: (p.x * 0.5 + 0.5) * window.innerWidth,
+            y: (-p.y * 0.5 + 0.5) * window.innerHeight,
+            visible: p.z > 0 && p.z < 1
+          };
+        }
+
+        const a1 = document.getElementById('eyeArrow1');
+        const a2 = document.getElementById('eyeArrow2');
+        const a3 = document.getElementById('eyeArrow3');
+
+        if (eyeOn) {
+          const pDede = toScreen(dedeGroup.position);
+          const pSapling = toScreen(saplingGroup.position);
+          const pTorun = toScreen(torunGroup.position);
+
+          a1.style.display = a2.style.display = a3.style.display = 'block';
+          a1.style.left = `${pDede.x + (pSapling.x - pDede.x) * 0.4}px`;
+          a1.style.top = `${pDede.y + (pSapling.y - pDede.y) * 0.4}px`;
+
+          a2.style.left = `${pSapling.x}px`;
+          a2.style.top = `${pSapling.y}px`;
+
+          a3.style.left = `${pSapling.x + (pTorun.x - pSapling.x) * 0.6}px`;
+          a3.style.top = `${pSapling.y + (pTorun.y - pSapling.y) * 0.6}px`;
+        } else {
+          a1.style.display = a2.style.display = a3.style.display = 'none';
+        }
+
+        const l1 = document.getElementById('roadLine1');
+        const l2 = document.getElementById('roadLine2');
+        if (lineOn) {
+          const p1A = toScreen(new THREE.Vector3(-6, 0.05, 12));
+          const p1B = toScreen(new THREE.Vector3(-6, 0.05, -12));
+          const p2A = toScreen(new THREE.Vector3(6, 0.05, 12));
+          const p2B = toScreen(new THREE.Vector3(6, 0.05, -12));
+
+          function drawLine(elem, pA, pB) {
+            if (pA.visible || pB.visible) {
+              elem.style.display = 'block';
+              const dist = Math.hypot(pB.x - pA.x, pB.y - pA.y);
+              const angle = Math.atan2(pB.y - pA.y, pB.x - pA.x) * (180 / Math.PI);
+              elem.style.left = `${pA.x}px`;
+              elem.style.top = `${pA.y}px`;
+              elem.style.width = `${dist}px`;
+              elem.style.transform = `rotate(${angle}deg)`;
+            } else {
+              elem.style.display = 'none';
+            }
+          }
+
+          drawLine(l1, p1A, p1B);
+          drawLine(l2, p2A, p2B);
+        } else {
+          l1.style.display = l2.style.display = 'none';
+        }
+      }
+
+      /* ==========================================================
+         12. BUTTON LISTENERS & INTERACTIONS
+      ========================================================== */
+      document.getElementById('analyzeBtn').onclick = evaluateComposition;
+
+      document.getElementById('gridBtn').onclick = () => {
+        const monGrid = document.getElementById('monitorGrid');
+        const isShow = monGrid.classList.toggle('show');
+        document.getElementById('gridBtn').classList.toggle('active', isShow);
+        toast(isShow ? '1/3 Izgarası açık.' : '1/3 Izgarası kapalı.');
+      };
+
+      document.getElementById('monGridBtn').onclick = () => {
+        const monGrid = document.getElementById('monitorGrid');
+        const isShow = monGrid.classList.toggle('show');
+        document.getElementById('monGridBtn').classList.toggle('active', isShow);
+      };
+
+      document.getElementById('eyeBtn').onclick = () => {
+        eyeOn = !eyeOn;
+        document.getElementById('eyeBtn').classList.toggle('active', eyeOn);
+        updateOverlays();
+        toast(eyeOn ? 'Göz akışı çizgisi açık.' : 'Göz akışı kapalı.');
+      };
+
+      document.getElementById('lineBtn').onclick = () => {
+        lineOn = !lineOn;
+        document.getElementById('lineBtn').classList.toggle('active', lineOn);
+        updateOverlays();
+        toast(lineOn ? 'Perspektif kaçış çizgileri açık.' : 'Perspektif kapalı.');
+      };
+
+      document.getElementById('expandMonitorBtn').onclick = () => {
+        const mon = document.getElementById('monitor');
+        const expBtn = document.getElementById('expandMonitorBtn');
+        mon.classList.toggle('expanded');
+        const isExp = mon.classList.contains('expanded');
+        expBtn.textContent = isExp ? '⤡' : '⤢';
+        expBtn.classList.toggle('active', isExp);
+        resize();
+        toast(isExp ? 'Vizör genişletildi.' : 'Vizör standart boyuta alındı.');
+      };
+
+      /* ==========================================================
+         SCENARIOS CONFIGURATION (10 SABIR FİDANI MISSIONS WITH CLEAR HINTS)
+      ========================================================== */
+      const SCENARIOS = [
+        {
+          id: 1,
+          num: '01',
+          kicker: 'GÖREV 01 · GENİŞ ÇEKİM & BOŞ ALAN',
+          title: 'Bahçeye İlk Adım & Boş Alan',
+          summary: 'Karakterleri vizörün alt 1/3 bandına alıp geniş bahçe ve gökyüzü boşluğunu vurgula.',
+          thumb: 'img/sf1.jpg',
+          desc: 'Dede ve torun fidan dikecekleri geniş bahçede toprağı hazırlıyor. 3D Kamerayı geniş açıya (35mm) alıp ikiliyi vizörün alt 1/3 bandına yerleştirerek önlerindeki sabırlı emeğin büyüklüğünü ve gökyüzü boşluğunu (Negatif Alan) hissettir.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Dede ve Torun'un doğanın büyüklüğü ve geleceğin umut alanı karşısındaki sabırlı başlangıcını hissettirmek.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Negatif Alan & Alt 1/3 Kuralı</b> — Karakterler alt bandı kaplarken kadrajın %60'ı gökyüzü ve bahçe toprağına ayrılmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 3.2m - 3.6m (Yukarıdan genel bakış)<br>
+              🔭 <b>Tavsiye Lens:</b> 35mm Geniş Açı (FOV: 62°)<br>
+              📐 <b>Kamera Açısı:</b> Tilt: -14° (Hafif aşağı), Pan: -22° (Bahçeye odak)
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Sağ alttaki vizörde hem Dede hem Torun görünmeli ve alt yatay çizginin üzerine oturmalıdır.</div>
+          </div>`,
+          tags: ['Geniş Çekim (35mm)', 'Boş Alan', 'Sabırlı Emek'],
+          camPos: { x: 5.5, y: 3.4, z: 9.5, yaw: -22, pitch: -14, fov: 62 },
+          bg: 0x3e7cb1,
+          fog: 0x3e7cb1,
+          sunColor: 0xffbf69,
+          sunInt: 1.8
+        },
+        {
+          id: 2,
+          num: '02',
+          kicker: 'GÖREV 02 · ORTA PLAN & LEAD ROOM',
+          title: 'Toprağı Kazmak & Bakış Payı',
+          summary: 'Torunun baktığı yönde geniş nefes payı bırakarak merak ve beklenti oluştur.',
+          thumb: 'img/sf2.jpg',
+          desc: 'Dede bahçe küreğiyle toprağı havalandırırken torun merakla izliyor. Torunun baktığı yönde geniş bir <strong>bakış payı (Lead Room)</strong> bırakarak izleyicinin odağını toprağa taşı.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Torunun dedesini izlerken duyduğu merakı ve eylemin gerçekleştiği alanı vurgulamak.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Bakış Payı (Lead Room)</b> — Karakter kadrajın sol 1/3 çizgisine yerleşmeli, baktığı sağ tarafta en az %50 eylem boşluğu bırakılmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.8m - 2.0m (Göz hizası)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm Standart Lens (FOV: 46°)<br>
+              📐 <b>Kamera Açısı:</b> Tilt: -6°, Pan: -24°
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Torun sol dikey çizgide, dede ise sağ tarafta toprağı kazarken görünmelidir.</div>
+          </div>`,
+          tags: ['Orta Plan (50mm)', 'Lead Room', 'Merak'],
+          camPos: { x: 3.8, y: 1.9, z: 6.2, yaw: -24, pitch: -6, fov: 46 },
+          bg: 0x3873a8,
+          fog: 0x3873a8,
+          sunColor: 0xffb85c,
+          sunInt: 1.8
+        },
+        {
+          id: 3,
+          num: '03',
+          kicker: 'GÖREV 03 · İKİLİ DENGE & ORTA ÇEKİM',
+          title: 'Fidanı Tutmak & İkili Denge',
+          summary: 'Dede ve torunu iki yana dengeli dağıtarak fidanı merkezdeki bağlayıcı öğe yap.',
+          thumb: 'img/sf3.jpg',
+          desc: 'Torun küçük fidanı iki eliyle nazikçe tutuyor, dede ise fidanı toprağa nasıl yerleştireceğini gösteriyor. İki karakteri kadrajın iki yanına eşit dengede yerleştir.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> İki nesil arasındaki eşit sevgi bağını ve fidan dikme eylemindeki ortak sorumluluğu göstermek.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>İkili Simetrik Denge (Two-Shot Balance)</b> — Sol tarafta torun, sağ tarafta dede ve tam ortada yeşil fidan dengeli bir üçgen oluşturmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.6m (Göğüs hizası)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm Lens (FOV: 48°)<br>
+              📐 <b>Kamera Konumu:</b> Tam karşıdan (X: 0, Z: 5.2m, Pan: 0°)
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Fidan vizörün tam ortasındaki dikey hatta, dede ve torun ise iki eşit mesafede olmalıdır.</div>
+          </div>`,
+          tags: ['İkili Denge', 'Bağlayıcı Öğe', 'Ortak Emek'],
+          camPos: { x: 0.1, y: 1.6, z: 5.2, yaw: 0, pitch: -5, fov: 48 },
+          bg: 0x4181b8,
+          fog: 0x4181b8,
+          sunColor: 0xffc470,
+          sunInt: 1.85
+        },
+        {
+          id: 4,
+          num: '04',
+          kicker: 'GÖREV 04 · ÜÇTE BİR & DETAY',
+          title: 'Toprağı Bastırmak & 1/3 Kuralı',
+          summary: 'Dedenin ellerini ve fidanı sol alt 1/3 güç noktasına kilitleyip torunu sağ üste al.',
+          thumb: 'img/sc4.jpg',
+          desc: 'Dede fidanın etrafındaki toprağı şefkatle bastırırken elleri sol alt 1/3 güç noktasına (<span style="color:#52c41a">mp3</span>) oturt; torun sağ üstte dikkatle izlesin.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Fidanın toprağa kök salma anındaki şefkat dolu el hareketine odaklanmak.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>1/3 Kuralı & Çapraz Denge</b> — Fidan sol alt kesişim noktasına (<span style="color:#52c41a">mp3</span>), Torun ise sağ üst alana hizalanmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.3m (Toprak hizasına yakın)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm (FOV: 42°)<br>
+              📐 <b>Kamera Açısı:</b> Tilt: -8°, Pan: -18°
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Sol alt kesişimdeki yeşil hedef noktası (mp3) fidanın tam kök hizasında parlamalıdır.</div>
+          </div>`,
+          tags: ['1/3 Kuralı', 'Detay Odak', 'Şefkat'],
+          camPos: { x: 2.2, y: 1.3, z: 4.0, yaw: -18, pitch: -8, fov: 42 },
+          bg: 0x3d7cae,
+          fog: 0x3d7cae,
+          sunColor: 0xffbe66,
+          sunInt: 1.8
+        },
+        {
+          id: 5,
+          num: '05',
+          kicker: 'GÖREV 05 · RİTİM 1 · SANTRAL DETAY',
+          title: 'Sabır Toprağı & Yakın Çekim',
+          summary: 'Fidanı ve toprağı kadrajın tam merkezine oturtup süzülen toprak detayına odaklan.',
+          thumb: 'img/sc5.jpg',
+          desc: 'Öğüt anının 1. beat\'i: Dedenin toprağı düzelten elleri kadrajın tam ortasında (Santral kompozisyon). Toprağın bereketi ve sabrın başlangıcı öne çıkar.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> 3 adımlı Ritim kurgusunun 1. vuruşu (Detay): Toprağın ve köklerin dokusuna odaklanarak sabrı başlatmak.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Santral / Merkez Çekim (Center Framing)</b> — Fidan kadrajın tam ortasındaki artı işaretine (+) kilitlenmelidir.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.1m (Yakın plan)<br>
+              📍 <b>Kamera Mesafesi:</b> Fidanın 2.5m hemen önü<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm Lens (FOV: 50°)
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Fidan ve toprak tam ortada büyük ve net görünmelidir.</div>
+          </div>`,
+          tags: ['Ritim (Beat 1)', 'Santral Çekim', 'Toprak Dokusu'],
+          camPos: { x: 0, y: 1.1, z: 3.2, yaw: 0, pitch: -8, fov: 50 },
+          bg: 0x4485bd,
+          fog: 0x4485bd,
+          sunColor: 0xffc775,
+          sunInt: 1.85
+        },
+        {
+          id: 6,
+          num: '06',
+          kicker: 'GÖREV 06 · RİTİM 2 · TEPKİ PLANI',
+          title: 'Meraklı Bekleyiş & Tepki',
+          summary: 'Torunun merak dolu yüzünü sağ üst 1/3 noktasına alıp sol tarafta düşünce boşluğu bırak.',
+          thumb: 'img/sc6.jpg',
+          desc: 'Öğüt anının 2. beat\'i: Torunun meraklı yüzü sağ üst 1/3 noktasına yerleştirilir. Sol taraftaki boşluk çocuğun zihnindeki sabır ve düşünce alanını temsil eder.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Ritim kurgusunun 2. vuruşu (Tepki): Çocuğun içsel dünyasındaki merakı ve düşünce sürecini aktarmak.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Tepki Planı & Düşünce Alanı</b> — Torun sağ üst kesişim noktasına (<span style="color:#52c41a">mp2</span>) yerleşmeli, sol taraf düşünce payı olarak açık bırakılmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.4m (Torunun yüz hizası)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm Lens (FOV: 44°)<br>
+              📐 <b>Kamera Açısı:</b> Pan: +24° (Toruna doğru)
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Torun sağ üst kesişimde parlamalı, sol taraf ferah ve boş kalmalıdır.</div>
+          </div>`,
+          tags: ['Ritim (Beat 2)', 'Tepki Planı', 'İçsel Merak'],
+          camPos: { x: -1.8, y: 1.4, z: 3.5, yaw: 24, pitch: -4, fov: 44 },
+          bg: 0x3e7cb1,
+          fog: 0x3e7cb1,
+          sunColor: 0xffb866,
+          sunInt: 1.75
+        },
+        {
+          id: 7,
+          num: '07',
+          kicker: 'GÖREV 07 · RİTİM 3 · SESSİZ ÖĞÜT',
+          title: 'Sessiz Öğüt & Göz Hizası Denge',
+          summary: 'Dede ve torunu göz hizasında karşılıklı çerçeveleyerek sessiz sabır bağını yansıt.',
+          thumb: 'img/sc7.jpg',
+          desc: 'Öğüt anının 3. beat\'i (Payoff): Dede torununun karşısında diz çökmüş, altın saat ışığında konuşurken sahnede derin ve huzurlu bir sessizlik dengesi kurulur.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Ritim kurgusunun 3. vuruşu (Sonuç/Payoff): Dede ve torunun karşılıklı göz hizasındaki sessiz ve bilgece aktarımını vurgulamak.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Göz Hizası (Eye-Level) & İkili Çerçeveleme</b> — Kamera tam diz seviyesine inmeli, dede ve torun eşit yükseklikte karşılıklı durmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.2m (Diz seviyesi / Göz hizası)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm Lens (FOV: 46°)<br>
+              📐 <b>Kamera Açısı:</b> Tilt: -2°, Pan: -20°
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Dede ve Torun aynı yatay göz çizgisinde karşılıklı görünmelidir.</div>
+          </div>`,
+          tags: ['Ritim (Payoff)', 'Göz Hizası', 'Sessiz Öğüt'],
+          camPos: { x: 2.8, y: 1.2, z: 4.8, yaw: -20, pitch: -2, fov: 46 },
+          bg: 0xd4844c,
+          fog: 0xd4844c,
+          sunColor: 0xffa044,
+          sunInt: 2.0
+        },
+        {
+          id: 8,
+          num: '08',
+          kicker: 'GÖREV 08 · HAREKET & GÖZ AKIŞI',
+          title: 'Sabır Fidanını Sulama',
+          summary: 'Sulama kabından dökülen suyun çizgisiyle dededen fidana ve toruna göz akışı kur.',
+          thumb: 'img/sc8.jpg',
+          desc: 'Dede ve torun birlikte sulama kabından fidana su döküyor. Su damlacıkları havada dinamik bir hareket ve dede -> fidan -> torun yönünde göz akışı yaratır.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Can suyunun akışıyla sahneye canlılık katmak ve gözün kadrajda doğal bir rotayı takip etmesini sağlamak.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Göz Akışı Çizgisi (Visual Flow Line)</b> — Dede'den başlayan hareket, sulama kabı ve su damlaları üzerinden fidana ve Torun'a doğru akmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 1.7m (Hafif üstten eylem açısı)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm (FOV: 48°)<br>
+              📐 <b>Kamera Açısı:</b> Pan: -18°, Tilt: -6°
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Soldaki <b>👁 Göz Akışı</b> butonunu açarak suyun oluşturduğu çizgiyi takip edin.</div>
+          </div>`,
+          tags: ['Hareket Dili', 'Göz Akışı', 'Can Suyu'],
+          camPos: { x: 3.4, y: 1.7, z: 5.4, yaw: -18, pitch: -6, fov: 48 },
+          bg: 0x3e7cb1,
+          fog: 0x3e7cb1,
+          sunColor: 0xffc06a,
+          sunInt: 1.8
+        },
+        {
+          id: 9,
+          num: '09',
+          kicker: 'GÖREV 09 · OMUZ ÜSTÜ (OTS)',
+          title: 'Dedenin Gözünden Fidanın Geleceği',
+          summary: 'Dedenin omzu üzerinden torunun fidanı sevgiyle izleyişine derinlikli bakış sun.',
+          thumb: 'img/sc9.jpg',
+          desc: 'Kamerayı dedenin hemen arkasına ve omuz hizasına yerleştir. Dedenin silüeti ön planda derinlik katmanı oluştururken torunun fidana olan şefkatine odaklan.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> İzleyiciyi Dede'nin gözünden sahneye dahil ederek torununa ve fidana duyduğu şefkati derinleştirmek.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Omuz Üstü Çekim (Over-The-Shoulder / OTS)</b> — Dede'nin omzu ve başının kenarı kadrajın sol altını fluca kaplamalı, netlik Torun'da olmalıdır.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Konumu:</b> Dede'nin 1.5m hemen arkası (X: 1.8, Y: 1.35, Z: 2.2m)<br>
+              🔭 <b>Tavsiye Lens:</b> 50mm (FOV: 44°)<br>
+              📐 <b>Kamera Açısı:</b> Pan: -36°, Tilt: -5°
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Sol ön planda Dede'nin silüeti, derinlikte ise Torun ve fidan net şekilde görünmelidir.</div>
+          </div>`,
+          tags: ['Over-The-Shoulder', 'Derinlik Katmanı', 'Gelecek Umudu'],
+          camPos: { x: 1.8, y: 1.35, z: 2.2, yaw: -36, pitch: -5, fov: 44 },
+          bg: 0xc87440,
+          fog: 0xc87440,
+          sunColor: 0xff9030,
+          sunInt: 2.0
+        },
+        {
+          id: 10,
+          num: '10',
+          kicker: 'GÖREV 10 · GÜN BATIMI KUŞ BAKIŞI',
+          title: 'Sabır Meyvesi & Master Kuş Bakışı',
+          summary: 'Tepeden tüm bahçeyi, batan güneşi ve fidanın yanındaki ikiliyi kapsayan master kadraj.',
+          thumb: 'img/sc10.jpg',
+          desc: 'Gün batımı ışığında fidanın yanına oturan ikiliyi, bahçe çitlerini ve geniş gökyüzünü kapsayan nihai usta kuş bakışı (Master Shot). Sabrın huzur dolu kapanışı.',
+          hint: `<div style="display:flex;flex-direction:column;gap:8px">
+            <div>🎯 <b>Görevin Amacı:</b> Hikayenin nihai kapanışını tüm bahçeyi kapsayan masalsı bir kuş bakışı master planla özetlemek.</div>
+            <div>📐 <b>Uygulanacak Kural:</b> <b>Kuş Bakışı Master Çekim (Bird's Eye / High Angle)</b> — Kamera 7-8m tepeye çıkmalı, -35° açıyla tüm bahçe bir tablo gibi çerçevelenmelidir.</div>
+            <div style="background:rgba(255,255,255,0.06);padding:8px;border-radius:8px;font-size:11px">
+              📍 <b>Kamera Yüksekliği:</b> 7.5m - 8.0m (Tepe Vinç / Crane açısı)<br>
+              🔭 <b>Tavsiye Lens:</b> 35mm Geniş Açı (FOV: 68°)<br>
+              📐 <b>Kamera Açısı:</b> Tilt: -36° (Aşağı eğik), Pan: -14°
+            </div>
+            <div>👁️ <b>Vizör Doğrulaması:</b> Bahçe çitleri, çiçekler, ortadaki fidan ve ikili masalsı bir bütün halinde görünmelidir.</div>
+          </div>`,
+          tags: ['Kuş Bakışı', 'Master Shot', 'Huzurlu Kapanış'],
+          camPos: { x: 3.5, y: 7.8, z: 10.5, yaw: -14, pitch: -36, fov: 68 },
+          bg: 0xbc5032,
+          fog: 0xbc5032,
+          sunColor: 0xff5426,
+          sunInt: 2.1
+        }
+      ];
+
+      // PROGRESS TRACKING & LOCALSTORAGE PERSISTENCE
+      let unlockedScenarios = new Set([0]); // Only Scenario 01 unlocked initially
+      let passedScenarios = new Set();
+      try {
+        const savedUnlocked = localStorage.getItem('sf_unlocked_scenarios');
+        if (savedUnlocked) {
+          JSON.parse(savedUnlocked).forEach(id => unlockedScenarios.add(id));
+        }
+        const savedPassed = localStorage.getItem('sf_passed_scenarios');
+        if (savedPassed) {
+          JSON.parse(savedPassed).forEach(id => passedScenarios.add(id));
+        }
+      } catch (e) { }
+
+      function saveProgress() {
+        try {
+          localStorage.setItem('sf_unlocked_scenarios', JSON.stringify([...unlockedScenarios]));
+          localStorage.setItem('sf_passed_scenarios', JSON.stringify([...passedScenarios]));
+        } catch (e) { }
+      }
+
+      let currentScenarioIndex = 0; // Starts at Scenario 01
+
+      function renderScenarioGrid() {
+        const grid = document.getElementById('scenarioGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        SCENARIOS.forEach((sc, i) => {
+          const isUnlocked = unlockedScenarios.has(i);
+          const isPassed = passedScenarios.has(i);
+          const isActive = i === currentScenarioIndex;
+
+          const card = document.createElement('div');
+          card.className = `sc-card ${isActive ? 'active' : ''} ${!isUnlocked ? 'locked' : ''}`;
+
+          let badgeHTML = '';
+          if (!isUnlocked) {
+            badgeHTML = `<span class="sc-lock-badge">🔒 Kilitli</span>`;
+          } else if (isPassed) {
+            badgeHTML = `<span class="sc-passed-badge">✓ Başarıldı</span>`;
+          }
+
+          let lockCoverHTML = '';
+          if (!isUnlocked) {
+            lockCoverHTML = `<div class="sc-card-locked-cover"><span>🔒</span><span>Kilitli Görev</span></div>`;
+          }
+
+          card.innerHTML = `
+            <div class="sc-card-thumb-wrap">
+              <img class="sc-card-thumb" src="${sc.thumb}" alt="${sc.title}" loading="lazy">
+              <div class="sc-card-thumb-overlay">
+                <span class="sc-card-badge">${sc.num}</span>
+                ${badgeHTML}
+              </div>
+              ${lockCoverHTML}
+            </div>
+            <div>
+              <div class="sc-card-title">${isUnlocked ? sc.title : '🔒 ' + sc.title}</div>
+              <div class="sc-card-desc">${isUnlocked ? sc.summary : 'Kilidi açmak için önceki görevde ≥70 puan alın.'}</div>
+            </div>
+            <div class="sc-card-tags">
+              ${sc.tags.map(t => `<span class="sc-tag">${t}</span>`).join('')}
+            </div>
+          `;
+
+          card.onclick = () => {
+            if (!isUnlocked) {
+              toast(`🔒 Bu senaryo kilitli! Açmak için Görev 0${i} görevinde en az 70 puan alın.`);
+              return;
+            }
+            loadScenario(i);
+          };
+          grid.appendChild(card);
+        });
+      }
+
+      function loadScenario(index) {
+        if (!unlockedScenarios.has(index)) {
+          toast(`🔒 Senaryo 0${index + 1} henüz kilitli!`);
+          return;
+        }
+        currentScenarioIndex = index;
+        const sc = SCENARIOS[index];
+
+        // Update Nav buttons
+        const prevBtn = document.getElementById('scPrevBtn');
+        const nextBtn = document.getElementById('scNextBtn');
+        if (prevBtn) prevBtn.disabled = (index === 0 || !unlockedScenarios.has(index - 1));
+        if (nextBtn) nextBtn.disabled = (index >= SCENARIOS.length - 1 || !unlockedScenarios.has(index + 1));
+
+        // Update UI Text
+        document.getElementById('scKicker').textContent = sc.kicker;
+        document.getElementById('scTitle').textContent = sc.title;
+        document.getElementById('scDesc').innerHTML = sc.desc;
+        const topLbl = document.getElementById('topScenarioLabel');
+        if (topLbl) topLbl.textContent = `${sc.num} · ${sc.title}`;
+
+        // Update Atmosphere & Lights
+        scene.background.setHex(sc.bg);
+        scene.fog.color.setHex(sc.fog);
+        sun.color.setHex(sc.sunColor);
+        sun.intensity = sc.sunInt;
+
+        // Apply Recommended Camera Setup
+        cameraRig.position.set(sc.camPos.x, sc.camPos.y, sc.camPos.z);
+        cameraYaw = sc.camPos.yaw;
+        cameraPitch = sc.camPos.pitch;
+        cameraHeight = sc.camPos.y;
+        cameraFov = sc.camPos.fov;
+        updateShotCameraTransform(true, false);
+        setCameraSelected(true); // Camera and Gizmo arrows always visible and interactive
+        setGizmoMode('translate');
+
+        // Close popups
+        const fb = document.getElementById('feedbackPopup');
+        if (fb) fb.classList.remove('show');
+        const h = document.getElementById('hint');
+        if (h) h.classList.remove('show');
+        const scModal = document.getElementById('scenarioModal');
+        if (scModal) scModal.classList.remove('show');
+
+        userHasModifiedCamera = false;
+        lastAttemptState = {
+          x: sc.camPos.x,
+          y: sc.camPos.y,
+          z: sc.camPos.z,
+          yaw: sc.camPos.yaw,
+          pitch: sc.camPos.pitch,
+          fov: sc.camPos.fov
+        };
+        updateAttemptPipsUI();
+
+        renderScenarioGrid();
+        toast(`Senaryo Yüklendi: ${sc.num} · ${sc.title}`);
+      }
+
+      // Initial Scenario Setup (Starts at Scenario 01)
+      loadScenario(0);
+
+      // Scenario Navigation Listeners
+      document.getElementById('scPrevBtn').onclick = () => loadScenario(currentScenarioIndex - 1);
+      document.getElementById('scNextBtn').onclick = () => loadScenario(currentScenarioIndex + 1);
+      document.getElementById('scListBtn').onclick = () => document.getElementById('scenarioModal').classList.add('show');
+      document.getElementById('scenarioBtn').onclick = () => document.getElementById('scenarioModal').classList.add('show');
+      document.getElementById('closeScenarioModalBtn').onclick = () => document.getElementById('scenarioModal').classList.remove('show');
+      document.getElementById('scenarioModal').onclick = (e) => {
+        if (e.target.id === 'scenarioModal') e.target.classList.remove('show');
+      };
+
+      // ----------------------------------------------------------
+      // SCREENSHOT, EXPORT, SHARE, COLLECTION HELPERS
+      // ----------------------------------------------------------
+      function captureShotDataURL() {
+        cameraRig.visible = false;
+        transformControls.visible = false;
+        previewRenderer.render(scene, shotCamera);
+        return previewCanvas.toDataURL('image/png');
+      }
+
+      function flashShutter() {
+        const f = document.getElementById('shutterFlash');
+        if (!f) return;
+        f.classList.add('flash');
+        setTimeout(() => f.classList.remove('flash'), 80);
+      }
+
+      function takeScreenshot() {
+        flashShutter();
+        const dataUrl = captureShotDataURL();
+        const sc = SCENARIOS[currentScenarioIndex];
+        const link = document.createElement('a');
+        link.download = `Sabir_Fidani_Gorev_${sc.num}_Kadraj.png`;
+        link.href = dataUrl;
+        link.click();
+        toast(`📸 Ekran görüntüsü indirildi: ${link.download}`);
+      }
+
+      function exportKadraj() {
+        flashShutter();
+        const dataUrl = captureShotDataURL();
+        const sc = SCENARIOS[currentScenarioIndex];
+
+        // 1. Download screenshot
+        const imgLink = document.createElement('a');
+        imgLink.download = `Sabir_Fidani_Gorev_${sc.num}_Shot.png`;
+        imgLink.href = dataUrl;
+        imgLink.click();
+
+        // 2. Download JSON metadata
+        const meta = {
+          project: "Sabır Fidanı Storyboard Stüdyosu",
+          scenario: `${sc.num} · ${sc.title}`,
+          timestamp: new Date().toISOString(),
+          camera: {
+            position: { x: +cameraRig.position.x.toFixed(2), y: +cameraRig.position.y.toFixed(2), z: +cameraRig.position.z.toFixed(2) },
+            yaw: Math.round(cameraYaw),
+            pitch: Math.round(cameraPitch),
+            fov: cameraFov,
+            lens: cameraFov === 62 ? '35mm' : (cameraFov === 44 ? '50mm' : '85mm')
+          }
+        };
+        const blob = new Blob([JSON.stringify(meta, null, 2)], { type: 'application/json' });
+        const jsonLink = document.createElement('a');
+        jsonLink.download = `Sabir_Fidani_Gorev_${sc.num}_Meta.json`;
+        jsonLink.href = URL.createObjectURL(blob);
+        setTimeout(() => jsonLink.click(), 200);
+
+        toast(`📥 Kadraj ve Storyboard JSON verisi dışa aktarıldı!`);
+      }
+
+      function shareKadraj() {
+        const sc = SCENARIOS[currentScenarioIndex];
+        const shareData = {
+          title: `Sabır Fidanı — ${sc.num} · ${sc.title}`,
+          text: `3D Sinematik Kamera Stüdyosunda "${sc.title}" kadrajımı incele! Lens: ${cameraFov}° FOV, Yükseklik: ${cameraRig.position.y.toFixed(1)}m`,
+          url: window.location.href
+        };
+
+        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+          navigator.share(shareData).catch(() => { });
+        } else {
+          navigator.clipboard.writeText(`${shareData.title}\n${shareData.text}\n${shareData.url}`).then(() => {
+            toast('🔗 Kadraj bilgileri panoya kopyalandı!');
+          }).catch(() => {
+            toast('🔗 Paylaşım bağlantısı hazır!');
+          });
+        }
+      }
+
+      // COLLECTION (FAVORITES / SAVED SHOTS)
+      let collection = [];
+      try {
+        const savedColl = localStorage.getItem('sf_collection');
+        if (savedColl) collection = JSON.parse(savedColl);
+      } catch (e) { }
+
+      function updateCollectionBadge() {
+        const badge = document.getElementById('collCountBadge');
+        if (badge) badge.textContent = collection.length;
+      }
+      updateCollectionBadge();
+
+      function saveToCollection() {
+        flashShutter();
+        const dataUrl = captureShotDataURL();
+        const sc = SCENARIOS[currentScenarioIndex];
+        const item = {
+          id: Date.now(),
+          scenarioNum: sc.num,
+          title: sc.title,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          thumb: dataUrl,
+          camPos: { x: +cameraRig.position.x.toFixed(2), y: +cameraRig.position.y.toFixed(2), z: +cameraRig.position.z.toFixed(2) },
+          yaw: Math.round(cameraYaw),
+          pitch: Math.round(cameraPitch),
+          fov: cameraFov
+        };
+
+        collection.unshift(item);
+        try {
+          localStorage.setItem('sf_collection', JSON.stringify(collection.slice(0, 20)));
+        } catch (e) { }
+        updateCollectionBadge();
+        renderCollectionGrid();
+        toast(`⭐ Kadraj koleksiyonunuza eklendi! (Toplam: ${collection.length})`);
+      }
+
+      function renderCollectionGrid() {
+        const grid = document.getElementById('collectionGrid');
+        if (!grid) return;
+        if (collection.length === 0) {
+          grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted);font-size:13px">Henüz kaydedilmiş kadraj yok.<br>İstediğiniz açıyı yakalayıp <b>[F]</b> tuşuna veya <b>⭐ Koleksiyon</b> butonuna basarak ekleyin!</div>`;
+          return;
+        }
+
+        grid.innerHTML = '';
+        collection.forEach((item, idx) => {
+          const div = document.createElement('div');
+          div.className = 'collection-item';
+          div.innerHTML = `
+            <img class="coll-thumb" src="${item.thumb}" alt="${item.title}">
+            <div class="coll-item-meta">
+              <b>${item.scenarioNum} · ${item.title}</b>
+              <span style="font-size:10px;color:var(--muted)">${item.time}</span>
+            </div>
+            <div class="coll-item-actions">
+              <button class="btn primary" style="padding:4px 8px;font-size:10px" data-idx="${idx}">🎯 Açıyı Yükle</button>
+              <button class="btn" style="padding:4px 8px;font-size:10px" data-del="${idx}">🗑 Sil</button>
+            </div>
+          `;
+
+          div.querySelector('[data-idx]').onclick = () => {
+            cameraRig.position.set(item.camPos.x, item.camPos.y, item.camPos.z);
+            cameraYaw = item.yaw;
+            cameraPitch = item.pitch;
+            cameraFov = item.fov;
+            updateShotCameraTransform();
+            document.getElementById('collectionModal').classList.remove('show');
+            toast(`Koleksiyondan yüklendi: ${item.scenarioNum} · ${item.title}`);
+          };
+
+          div.querySelector('[data-del]').onclick = () => {
+            collection.splice(idx, 1);
+            try {
+              localStorage.setItem('sf_collection', JSON.stringify(collection));
+            } catch (e) { }
+            updateCollectionBadge();
+            renderCollectionGrid();
+            toast('Kadraj koleksiyondan silindi.');
+          };
+
+          grid.appendChild(div);
+        });
+      }
+
+      // Studio Action Buttons Click Listeners
+      document.getElementById('btnScreenshot').onclick = takeScreenshot;
+      document.getElementById('btnExport').onclick = exportKadraj;
+      document.getElementById('btnShare').onclick = shareKadraj;
+      document.getElementById('btnCollection').onclick = () => {
+        const modal = document.getElementById('collectionModal');
+        renderCollectionGrid();
+        modal.classList.toggle('show');
+      };
+      document.getElementById('closeCollectionModalBtn').onclick = () => {
+        document.getElementById('collectionModal').classList.remove('show');
+      };
+      document.getElementById('collectionModal').onclick = (e) => {
+        if (e.target.id === 'collectionModal') e.target.classList.remove('show');
+      };
+
+      document.getElementById('resetBtn').onclick = () => {
+        editorCamera.position.set(13, 10, 18);
+        editorControls.target.set(0, 1.2, 0);
+        editorControls.update();
+        loadScenario(currentScenarioIndex);
+        toast('Bahçe sahnesi ve kamera başlangıç konumuna sıfırlandı.');
+      };
+
+      // Repositioned Hint Listeners (Floats cleanly directly above Scenario Panel)
+      document.getElementById('hintBtn').onclick = () => {
+        const h = document.getElementById('hint');
+        const sc = SCENARIOS[currentScenarioIndex];
+        document.getElementById('hintBody').innerHTML = sc.hint;
+        const scPanel = document.getElementById('scenarioPanel');
+        if (scPanel) {
+          h.style.bottom = (scPanel.offsetHeight + 28) + 'px';
+        }
+        h.classList.toggle('show');
+      };
+      document.getElementById('closeHintBtn').onclick = () => {
+        document.getElementById('hint').classList.remove('show');
+      };
+
+      // Play animation (Watering & sapling growth animation)
+      let isPlaying = false;
+      document.getElementById('playBtn').onclick = () => {
+        if (isPlaying) return;
+        let t = 0;
+        isPlaying = true;
+
+        function playLoop() {
+          if (!isPlaying) return;
+          t += 0.015;
+
+          // Gentle bowing animation for dedication
+          dedeGroup.rotation.x = Math.sin(t * 4) * 0.08;
+          torunGroup.rotation.z = Math.sin(t * 4) * 0.06;
+          saplingGroup.scale.y = 1.0 + Math.sin(t * 3) * 0.15;
+
+          if (t < 1) {
+            requestAnimationFrame(playLoop);
+          } else {
+            isPlaying = false;
+            dedeGroup.rotation.x = 0;
+            torunGroup.rotation.z = 0;
+            saplingGroup.scale.set(1, 1, 1);
+            toast('Fidan dikim hareketi tamamlandı. Kadrajı değerlendirebilirsiniz.');
+          }
+        }
+        playLoop();
+      };
+
+      // Main Scenario Action Buttons
+      document.getElementById('analyzeBtn').onclick = evaluateComposition;
+      document.getElementById('autoSolveBtn').onclick = autoSolveCurrentScenario;
+
+      // Modals & Popups
+      document.getElementById('helpBtn').onclick = () => document.getElementById('help').classList.add('show');
+      document.getElementById('closeHelp').onclick = () => document.getElementById('help').classList.remove('show');
+      const closeHelpX = document.getElementById('closeHelpX');
+      if (closeHelpX) closeHelpX.onclick = () => document.getElementById('help').classList.remove('show');
+
+      const fbClose = document.getElementById('fbCloseBtn');
+      if (fbClose) {
+        fbClose.onclick = () => document.getElementById('feedbackPopup').classList.remove('show');
+      }
+
+      // KEYBOARD SHORTCUTS
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (e.key === 'Escape') {
+          const fb = document.getElementById('feedbackPopup');
+          if (fb) fb.classList.remove('show');
+          const scModal = document.getElementById('scenarioModal');
+          if (scModal) scModal.classList.remove('show');
+          const collModal = document.getElementById('collectionModal');
+          if (collModal) collModal.classList.remove('show');
+          const hp = document.getElementById('help');
+          if (hp) hp.classList.remove('show');
+          const ht = document.getElementById('hint');
+          if (ht) ht.classList.remove('show');
+        } else if (e.key === 'g' || e.key === 'G') {
+          setGizmoMode('translate');
+        } else if (e.key === 'r' || e.key === 'R') {
+          setGizmoMode('rotate');
+        } else if (e.key === 's' || e.key === 'S') {
+          takeScreenshot();
+        } else if (e.key === 'e' || e.key === 'E') {
+          exportKadraj();
+        } else if (e.key === 'c' || e.key === 'C') {
+          shareKadraj();
+        } else if (e.key === 'f' || e.key === 'F') {
+          saveToCollection();
+        }
+      });
+
+      /* ==========================================================
+         13. RESIZE & DUAL-RENDER LOOP
+      ========================================================== */
+      function resize() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        renderer.setSize(w, h);
+        editorCamera.aspect = w / h;
+        editorCamera.updateProjectionMatrix();
+
+        const mon = document.getElementById('monitor');
+        if (mon) {
+          const rect = mon.getBoundingClientRect();
+          const mw = Math.max(rect.width, 100);
+          const mh = Math.max(rect.height, 60);
+          previewRenderer.setSize(mw, mh, false);
+          shotCamera.aspect = mw / mh;
+          shotCamera.updateProjectionMatrix();
+        }
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      const clockTimer = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const time = clockTimer.getElapsedTime();
+
+        editorControls.update();
+
+        // Idle soft leaf swaying in breeze
+        if (saplingGroup && !isPlaying) {
+          saplingGroup.rotation.z = Math.sin(time * 2.5) * 0.03;
+        }
+
+        // Render Main Scene
+        // Gentle Spring Cloud Drift
+        if (cloudGroup) {
+          cloudGroup.rotation.y += 0.0003;
+        }
+
+        // Gentle Sapling Leaf Breeze
+        if (saplingGroup) {
+          saplingGroup.children.forEach((child, ci) => {
+            if (ci > 0) {
+              child.rotation.z = 0.3 + Math.sin(time * 2.5 + ci) * 0.06;
+            }
+          });
+        }
+
+        if (activeViewMode === 'god') {
+          cameraRig.visible = true;
+          if (isCameraSelected) transformControls.visible = true;
+          renderer.render(scene, editorCamera);
+        } else {
+          cameraRig.visible = false;
+          transformControls.visible = false;
+          shotCamera.aspect = window.innerWidth / window.innerHeight;
+          shotCamera.updateProjectionMatrix();
+          renderer.render(scene, shotCamera);
+        }
+
+        // Render Monitor Viewfinder (ALWAYS renders from Shot/Director Camera POV)
+        const mon = document.getElementById('monitor');
+        if (mon) {
+          const mw = mon.clientWidth;
+          const mh = mon.clientHeight;
+          if (mw > 0 && mh > 0) {
+            const pr = Math.min(window.devicePixelRatio, 2);
+            const expectedW = Math.round(mw * pr);
+            const expectedH = Math.round(mh * pr);
+            if (previewCanvas.width !== expectedW || previewCanvas.height !== expectedH) {
+              previewRenderer.setPixelRatio(pr);
+              previewRenderer.setSize(mw, mh, false);
+              previewCanvas.style.width = '100%';
+              previewCanvas.style.height = '100%';
+              shotCamera.aspect = mw / mh;
+              shotCamera.updateProjectionMatrix();
+            }
+          }
+        }
+        cameraRig.visible = false; // Hide camera in its own viewfinder
+        transformControls.visible = false;
+        previewRenderer.render(scene, shotCamera);
+
+        if (activeViewMode === 'god') {
+          cameraRig.visible = true;
+          if (isCameraSelected) transformControls.visible = true;
+        }
+
+        // Realtime monitor grid hit points
+        updateMonitorThirdsHit();
+
+        if (eyeOn || lineOn) {
+          updateOverlays();
+        }
+      }
+
+      animate();
+
+    })();
+  </script>
+</body>
+
+</html>
